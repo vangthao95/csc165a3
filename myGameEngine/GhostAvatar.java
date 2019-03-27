@@ -1,5 +1,9 @@
 package myGameEngine;
 
+import ray.rage.scene.*;
+import ray.rml.*;
+import java.util.UUID;
+
 public class GhostAvatar
 {
 	private UUID id;

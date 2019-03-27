@@ -33,6 +33,14 @@ import myGameEngine.*;
 
 import net.java.games.input.Controller;
 
+// Networking begin
+import ray.networking.IGameConnection.ProtocolType;
+import java.util.Vector;
+import java.util.UUID;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+// Networking end
+
 public class MyGame extends VariableFrameRateGame {
 	private static final int MAX_PLANETS = 20;
 	private static final int TICK_RATE_IN_MS = 150; // Used for hp gain and loss while inside and outside box ship
@@ -77,9 +85,25 @@ public class MyGame extends VariableFrameRateGame {
 	private InputManager im;
 	
 	private int score1, score2, counter1, counter2;
+	
+	// Networking begin
+	private String serverAddress;
+	private int serverPort;
+	private ProtocolType serverProtocol;
+	private ProtocolClient protClient;
+	private boolean isClientConnected;
+	private Vector<UUID> gameObjectsToRemove;
+	// Networking end
 
-    public MyGame() {
+    public MyGame(String serverAddr, int sPort)
+	{
         super();
+		this.serverAddress = serverAddr;
+		this.serverPort = sPort;
+		this.serverProtocol = ProtocolType.UDP;
+		
+		setupNetworking();
+		
 		System.out.println("press w, a, s, d to move the camera or dolphin");
 		System.out.println("press the up, down, left, and right arrow to move the camera");
 		System.out.println("press spacebar to get on or off the dolphin");
@@ -107,10 +131,11 @@ public class MyGame extends VariableFrameRateGame {
 		gameWon2 = false;
 		counter1 = 0;
 		counter2 = 0;
-		}
+	}
 
-    public static void main(String[] args) {
-        Game game = new MyGame();
+    public static void main(String[] args)
+	{
+        Game game = new MyGame(args[0], Integer.parseInt(args[1]));
         try {
             game.startup();
             game.run();
@@ -123,8 +148,92 @@ public class MyGame extends VariableFrameRateGame {
 		
     }
 	
+	private void setupNetworking()
+	{
+		gameObjectsToRemove = new Vector<UUID>();
+		isClientConnected = false;
+		try
+		{
+			protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
+		}
+		catch (UnknownHostException e) 
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		if (protClient == null)
+		{
+			System.out.println("missing protocol host");
+		}
+		else
+		{
+			if (protClient != null)
+				System.out.println("Connected");
+			// ask client protocol to send initial join message
+			//to server, with a unique identifier for this client
+			protClient.sendJoinMessage();
+		}
+	}
+	
+	protected void processNetworking(float elapsTime)
+	{
+		// Process packets received by the client from the server
+		if (protClient != null)
+		{
+			//System.out.println("Telling protocol client to process packets...");
+			protClient.processPackets();
+		}
+		
+		// remove ghost avatars for players who have left the game
+		/*Iterator<UUID> it = gameObjectsToRemove.iterator();
+		while(it.hasNext())
+		{
+			//sm.destroySceneNode(it.next().toString());
+		}
+		gameObjectsToRemove.clear();*/
+	}
+	
+	public void addGhostAvatarToGameWorld(GhostAvatar avatar)
+	throws IOException
+	{
+		if (avatar != null)
+		{
+			/*Entity ghostE = sm.createEntity("ghost", "dolphinHighPoly.obj");
+			ghostE.setPrimitive(Primitive.TRIANGLES);
+			SceneNode ghostN = sm.getRootSceneNode().
+			createChildSceneNode(avatar.getID().toString());
+			ghostN.attachObject(ghostE);
+			//ghostN.setLocalPosition(desired location...);
+			avatar.setNode(ghostN);
+			avatar.setEntity(ghostE);
+			//avatar.setPosition(node’s position... maybe redundant);*/
+		}
+	}
+	
+	public void removeGhostAvatarFromGameWorld(GhostAvatar avatar)
+	{
+		//if(avatar != null) gameObjectsToRemove.add(avatar.getID());
+	}
+	
+	/*private class SendCloseConnectionPacketAction extends AbstractInputAction
+	{
+		// for leaving the game... need to attach to an input device
+		@Override
+		public void performAction(float time, Event e)
+		{
+			if(protClient != null && isClientConnected == true)
+			{
+				protClient.sendByeMessage();
+			}
+		}
+	}*/
+	
     @Override
-    protected void setupScene(Engine eng, SceneManager sm) throws IOException {
+    protected void setupScene(Engine eng, SceneManager sm) throws IOException
+	{
 		Entity dolphinE1 = sm.createEntity("dolphinE1", "dolphinHighPoly.obj");
         dolphinE1.setPrimitive(Primitive.TRIANGLES);
         
@@ -996,7 +1105,7 @@ public class MyGame extends VariableFrameRateGame {
 	}
 	/************************************************************/
 	
-	protected Vector3 getPlayerPosition(SceneNode dolphin)
+	protected Vector3 getPlayerPosition2(SceneNode dolphin)
 	{
 		if (onDolphin())
 		{
@@ -1012,7 +1121,7 @@ public class MyGame extends VariableFrameRateGame {
 	private boolean isCollided(SceneNode dolphin, int planetIndex)
 	{	
 		Vector3 planetPo = planetNodes[planetIndex].getLocalPosition();
-		Vector3 playerPo = getPlayerPosition(dolphin);
+		Vector3 playerPo = getPlayerPosition2(dolphin);
 		Vector3 dist = playerPo.sub(planetPo);
 
 		if (dist.length() <= 0.75f)
@@ -1069,7 +1178,7 @@ public class MyGame extends VariableFrameRateGame {
 	private boolean isInside(SceneNode dolphin)
 	{
 		Vector3 boxPo = boxN.getLocalPosition();
-		Vector3 playerPo = getPlayerPosition(dolphin);
+		Vector3 playerPo = getPlayerPosition2(dolphin);
 		Vector3 dist = playerPo.sub(boxPo);
 
 		if (dist.length() <= 0.50f)
@@ -1096,9 +1205,15 @@ public class MyGame extends VariableFrameRateGame {
 		return diff;
 	}
 	
+	public Vector3f getPlayerPosition()
+	{
+		return ((Vector3f)dolphinN1.getLocalPosition());
+	}
+	
 	@Override
     protected void update(Engine engine) {
 		im.update(elapsTime);
+		processNetworking(elapsTime);
 		orbitController1.updateCameraPosition();
 		orbitController2.updateCameraPosition();
 		rs = (GL4RenderSystem) engine.getRenderSystem();

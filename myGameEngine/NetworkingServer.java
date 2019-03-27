@@ -17,6 +17,8 @@ public class NetworkingServer
 			else
 			{
 				thisUDPServer = new GameServerUDP(serverPort);
+				if (thisUDPServer != null) 
+					System.out.println("Game server created");
 			}
 		}
 		catch (IOException e)

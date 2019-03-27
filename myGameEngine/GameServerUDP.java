@@ -24,6 +24,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			// format: join,localid
 			if(msgTokens[0].compareTo("join") == 0)
 			{
+				System.out.println("Received join message from ip address: " + senderIP);
 				try
 				{
 					IClientInfo ci;

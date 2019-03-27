@@ -1,2 +1,2 @@
-java myGameEngine.NetworkingServer 80 UDP
+java myGameEngine.NetworkingServer 6001 UDP
 timeout /t -1
