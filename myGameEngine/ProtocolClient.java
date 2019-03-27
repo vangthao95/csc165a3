@@ -2,6 +2,7 @@ package myGameEngine;
 
 import java.util.UUID;
 import java.util.Vector;
+import java.util.Iterator;
 import java.net.InetAddress;
 import java.io.IOException;
 import java.lang.String;
@@ -37,6 +38,7 @@ public class ProtocolClient extends GameConnectionClient
 					System.out.println("Connected to server successfully");
 					game.setIsConnected(true);
 					sendCreateMessage(game.getPlayerPosition());
+					sendDetailsRequest();
 				}
 				if(messageTokens[1].compareTo("failure") == 0)
 				{
@@ -61,29 +63,40 @@ public class ProtocolClient extends GameConnectionClient
 			else if (messageTokens[0].compareTo("move") == 0)
 			{
 				UUID ghostID = UUID.fromString(messageTokens[1]);
+				System.out.println("Here");
 				Vector3 ghostPosition = Vector3f.createFrom(
 					Float.parseFloat(messageTokens[2]),
 					Float.parseFloat(messageTokens[3]),
 					Float.parseFloat(messageTokens[4]));
 				System.out.println("Received new move message for user " + ghostID.toString());
 			}
-
-if(messageTokens[0].compareTo("wsds") == 0) // rec. create…
-{ // etc…..
-}
-if(messageTokens[0].compareTo("wsds") == 0) // rec. wants…
-{ // etc….. 
-}
-if(messageTokens[0].compareTo("move") == 0) // rec. move...
-{ // etc….. 
-}
-} }
+			else if (messageTokens[0].compareTo("wantRequest") == 0)
+			{
+				System.out.println("Detail requested from server");
+				wantRequestReply(messageTokens[1]);
+			}
+		}
+	}
 	public void sendJoinMessage() // format: join, localId
 	{
 		try
 		{
 			System.out.println("Sending Join packet...");
 			sendPacket(new String("join," + id.toString()));
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendDetailsRequest()
+	{
+		try
+		{
+			System.out.println("Requesting details from all connected clients");
+			String message = new String("wantRequest,") + id.toString();
+			sendPacket(message);
 		}
 		catch (IOException e)
 		{
@@ -123,13 +136,24 @@ if(messageTokens[0].compareTo("move") == 0) // rec. move...
 		}
 	}
 	
-	private void createGhostAvatar(UUID newPlayerID, Vector3 pos)
+	public void createGhostAvatar(UUID newPlayerID, Vector3 pos)
 	{
+		/*if (ghostAvatars != null)
+		{
+			Iterator iterate_value = ghostAvatars.iterator();
+			while (iterate_value.hasNext())
+			{
+				GhostAvatar current = (GhostAvatar)iterate_value.next();
+				if (current.getID() == newPlayerID)
+					return;
+			}
+		}*/
 		try
 		{
-			GhostAvatar newPlayer = new GhostAvatar(newPlayerID, pos);
-			game.addGhostAvatarToGameWorld(newPlayer);
+			GhostAvatar newPlayer = new GhostAvatar(newPlayerID);
+			game.addGhostAvatarToGameWorld(newPlayer, pos);
 			ghostAvatars.add(newPlayer);
+
 		}
 		catch (Exception e)
 		{
@@ -137,4 +161,28 @@ if(messageTokens[0].compareTo("move") == 0) // rec. move...
 			e.printStackTrace();
 		}
 	}
+	
+	// Data format:
+	// [0] type of request
+	// [1] requestee (self)
+	// [2] requestor (client requesting the details)
+	// [3] x position
+	// [4] y position
+	// [5] z position
+	public void wantRequestReply(String clientRequestingDetails)
+	{
+		try
+		{	
+			String message = new String("wantReply," + id.toString());
+			message += "," + clientRequestingDetails;
+			Vector3 pos = game.getPlayerPosition();
+			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
+			sendPacket(message);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+	}		
 }

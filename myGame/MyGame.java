@@ -96,7 +96,7 @@ public class MyGame extends VariableFrameRateGame {
 	// Networking end
 	
 	private SceneManager sceneManager;
-	
+	private int uniqueGhosts = 0;
 	
 
     public MyGame(String serverAddr, int sPort)
@@ -202,18 +202,18 @@ public class MyGame extends VariableFrameRateGame {
 		gameObjectsToRemove.clear();*/
 	}
 	
-	public void addGhostAvatarToGameWorld(GhostAvatar avatar)
+	public void addGhostAvatarToGameWorld(GhostAvatar avatar, Vector3 pos)
 	throws IOException
 	{
 		if (avatar != null)
 		{
-			Entity ghostE = sceneManager.createEntity("ghost", "dolphinHighPoly.obj");
+			uniqueGhosts++;
+			Entity ghostE = sceneManager.createEntity("ghost" + uniqueGhosts, "dolphinHighPoly.obj");
 			ghostE.setPrimitive(Primitive.TRIANGLES);
 			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
 			ghostN.attachObject(ghostE);
-			ghostN.setLocalPosition(avatar.getInitialPosition());
+			ghostN.setLocalPosition(pos);
 			avatar.setNode(ghostN);
-			avatar.setEntity(ghostE);
 		}
 	}
 	

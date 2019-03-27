@@ -24,12 +24,12 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			// format: join,localid
 			if(msgTokens[0].compareTo("join") == 0)
 			{
-				System.out.println("Received join message from ip address: " + senderIP);
 				try
 				{
 					IClientInfo ci;
 					ci = getServerSocket().createClientInfo(senderIP, sndPort);
 					UUID clientID = UUID.fromString(msgTokens[1]);
+					System.out.println("Received join message from id: " + clientID.toString());
 					addClient(ci, clientID);
 					sendJoinedMessage(clientID, true);
 				}
@@ -44,14 +44,16 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
+				System.out.println("Received create message from id: " + clientID.toString()) ;
 				sendCreateMessages(clientID, pos);
-				sendWantsDetailsMessages(clientID);
+				//sendWantsDetailsMessages(clientID);
 			}
 			// case where server receives a BYE message
 			// format: bye,localid
 			else if(msgTokens[0].compareTo("bye") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
+				System.out.println("Received bye message from id: " + clientID.toString());
 				sendByeMessages(clientID);
 				removeClient(clientID);
 			}
@@ -61,6 +63,19 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				System.out.println(clientID.toString() + " moved to x: " + pos[0] + " y: " + pos[1] + " z: " + pos[2]);
 				sendMoveMessages(clientID, pos);
+			}
+			else if (msgTokens[0].compareTo("wantReply") == 0)
+			{
+				UUID requestee = UUID.fromString(msgTokens[1]);
+				System.out.println("Received details reply from id: " + requestee.toString());
+				UUID requestor = UUID.fromString(msgTokens[2]);
+				String[] pos = {msgTokens[3], msgTokens[4], msgTokens[5]};
+				sendWantsDetailsReplies(requestor, requestee, pos);
+			}
+			else if (msgTokens[0].compareTo("wantRequest") == 0)
+			{
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				sendWantsDetailsMessages(clientID);
 			}
 		}
 	}
@@ -98,8 +113,39 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	public void sndDetailsMsg(UUID clientID, UUID remoteId, String[] position)
 	{ // etc…..
 	}
+	
+	// Request details from all clients besides the current clientID
 	public void sendWantsDetailsMessages(UUID clientID)
-	{ // etc…..
+	{
+		try
+		{
+			System.out.println(clientID.toString() + " is requesting details for all other clients...");
+			String message = new String("wantRequest," + clientID.toString());
+			forwardPacketToAll(message, clientID);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendWantsDetailsReplies(UUID requestor, UUID requestee, String[] position)
+	{
+		try
+		{
+			System.out.println("Sending details reply from " + requestee.toString() + " to " + requestor.toString());
+			String message = new String("create," + requestee.toString());
+			message += "," + position[0];
+			message += "," + position[1];
+			message += "," + position[2];
+			System.out.println("	" + requestee.toString());
+			System.out.println("	" + message);
+			sendPacket(message, requestor);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	public void sendMoveMessages(UUID clientID, String[] position)
 	{ 

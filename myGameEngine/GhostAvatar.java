@@ -8,22 +8,15 @@ public class GhostAvatar
 {
 	private UUID id;
 	private SceneNode node;
-	private Vector3 initialPosition;
 	
-	public GhostAvatar(UUID id, Vector3 position)
+	public GhostAvatar(UUID id)
 	{
 		this.id = id;
-		initialPosition = position;
 	}
 	
 	public UUID getID()
 	{
 		return id;
-	}
-	
-	public Vector3 getInitialPosition()
-	{
-		return initialPosition;
 	}
 	
 	public Vector3 getPos()
@@ -46,10 +39,6 @@ public class GhostAvatar
 		node = newNode;
 	}
 
-	public void setEntity(Entity newEntity)
-	{
-		node.attachObject(newEntity);
-	}
 	// accessors and setters for id, node, entity, and position
 
 }
