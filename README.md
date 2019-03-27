@@ -1,4 +1,4 @@
-# csc180a3
+# csc165a3
 
 ### To start the game:
 1. Run compile.bat
