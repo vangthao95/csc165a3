@@ -1,3 +1,4 @@
-javac myGame\MyGame.java
+javac myGame\*.java
+javac myGameEngine\*.java
 
 timeout /t -1
