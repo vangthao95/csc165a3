@@ -94,6 +94,10 @@ public class MyGame extends VariableFrameRateGame {
 	private boolean isClientConnected;
 	private Vector<UUID> gameObjectsToRemove;
 	// Networking end
+	
+	private SceneManager sceneManager;
+	
+	
 
     public MyGame(String serverAddr, int sPort)
 	{
@@ -101,8 +105,7 @@ public class MyGame extends VariableFrameRateGame {
 		this.serverAddress = serverAddr;
 		this.serverPort = sPort;
 		this.serverProtocol = ProtocolType.UDP;
-		
-		setupNetworking();
+	
 		
 		System.out.println("press w, a, s, d to move the camera or dolphin");
 		System.out.println("press the up, down, left, and right arrow to move the camera");
@@ -204,15 +207,13 @@ public class MyGame extends VariableFrameRateGame {
 	{
 		if (avatar != null)
 		{
-			/*Entity ghostE = sm.createEntity("ghost", "dolphinHighPoly.obj");
+			Entity ghostE = sceneManager.createEntity("ghost", "dolphinHighPoly.obj");
 			ghostE.setPrimitive(Primitive.TRIANGLES);
-			SceneNode ghostN = sm.getRootSceneNode().
-			createChildSceneNode(avatar.getID().toString());
+			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
 			ghostN.attachObject(ghostE);
-			//ghostN.setLocalPosition(desired location...);
+			ghostN.setLocalPosition(avatar.getInitialPosition());
 			avatar.setNode(ghostN);
 			avatar.setEntity(ghostE);
-			//avatar.setPosition(node’s position... maybe redundant);*/
 		}
 	}
 	
@@ -237,6 +238,8 @@ public class MyGame extends VariableFrameRateGame {
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
 	{
+		sceneManager = sm;
+		
 		Entity dolphinE1 = sm.createEntity("dolphinE1", "dolphinHighPoly.obj");
         dolphinE1.setPrimitive(Primitive.TRIANGLES);
         
@@ -262,6 +265,7 @@ public class MyGame extends VariableFrameRateGame {
 		sm.addController(player2controller);
 		setupPlanets(eng, sm);
 		setupManualObjects(eng, sm);
+		setupNetworking();
 		setupInputs();
 		setupOrbitCamera(eng, sm);
     }
@@ -1206,11 +1210,11 @@ public class MyGame extends VariableFrameRateGame {
 		float diff = elapsTime - prevElapsTime;
 		prevElapsTime = elapsTime;
 		return diff;
-	}
 	
-	public Vector3f getPlayerPosition()
+	}
+	public Vector3 getPlayerPosition()
 	{
-		return ((Vector3f)dolphinN1.getLocalPosition());
+		return dolphinN1.getLocalPosition();
 	}
 	
 	@Override
