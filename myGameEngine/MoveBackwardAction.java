@@ -3,17 +3,21 @@ package myGameEngine;
 import ray.rage.scene.*;
 import ray.input.action.AbstractInputAction;
 import net.java.games.input.Event;
+import ray.rml.*;
 
 public class MoveBackwardAction extends AbstractInputAction
 {
-	private Node avN;
-	public MoveBackwardAction(Node n)
+	private Node playerNode;
+	private ProtocolClient protClient;
+	public MoveBackwardAction(Node n, ProtocolClient p)
 	{
-		avN = n;
+		playerNode = n;
+		protClient = p;
 	}
 	
 	public void performAction(float time, Event e)
 	{
-		avN.moveBackward(0.01f);
+		playerNode.moveBackward(0.01f);
+		protClient.sendMoveMessage(playerNode.getLocalPosition());		
 	}
 }

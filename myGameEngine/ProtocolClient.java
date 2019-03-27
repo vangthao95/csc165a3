@@ -63,12 +63,12 @@ public class ProtocolClient extends GameConnectionClient
 			else if (messageTokens[0].compareTo("move") == 0)
 			{
 				UUID ghostID = UUID.fromString(messageTokens[1]);
-				System.out.println("Here");
 				Vector3 ghostPosition = Vector3f.createFrom(
 					Float.parseFloat(messageTokens[2]),
 					Float.parseFloat(messageTokens[3]),
 					Float.parseFloat(messageTokens[4]));
 				System.out.println("Received new move message for user " + ghostID.toString());
+				updateGhostAvatars(ghostID, ghostPosition);
 			}
 			else if (messageTokens[0].compareTo("wantRequest") == 0)
 			{
@@ -184,5 +184,24 @@ public class ProtocolClient extends GameConnectionClient
 			e.printStackTrace();
 		}
 		
-	}		
+	}
+
+	public void updateGhostAvatars(UUID ghostID, Vector3 pos)
+	{
+		for (int i = 0; i < ghostAvatars.size(); i++)
+		{
+			GhostAvatar currElem = ghostAvatars.elementAt(i);
+			System.out.println(ghostID.toString() + " checking " + currElem.getID().toString());
+			if (currElem.getID().toString().compareTo(ghostID.toString()) == 0)
+			{
+				System.out.println("Found");
+				currElem.setPos(pos);
+				return;
+			}
+			else
+			{
+				System.out.println("Not found");
+			}
+		}
+	}
 }

@@ -3,17 +3,21 @@ package myGameEngine;
 import ray.rage.scene.*;
 import ray.input.action.AbstractInputAction;
 import net.java.games.input.Event;
+import ray.rml.*;
 
 public class MoveRightAction extends AbstractInputAction
 {
-	private Node avN;
-	public MoveRightAction(Node n)
+	private Node playerNode;
+	private ProtocolClient protClient;
+	public MoveRightAction(Node n, ProtocolClient p)
 	{
-		avN = n;
+		playerNode = n;
+		protClient = p;
 	}
 	
 	public void performAction(float time, Event e)
 	{
-		avN.moveLeft(0.01f);
+		playerNode.moveLeft(0.01f);
+		protClient.sendMoveMessage(playerNode.getLocalPosition());		
 	}
 }
