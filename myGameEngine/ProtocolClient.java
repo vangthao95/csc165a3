@@ -34,6 +34,7 @@ public class ProtocolClient extends GameConnectionClient
 			{ // format: join, success or join, failure
 				if(messageTokens[1].compareTo("success") == 0)
 				{
+					System.out.println("Joined server successfully");
 					//game.setIsConnected(true);
 					sendCreateMessage(game.getPlayerPosition());
 				}
@@ -103,10 +104,20 @@ if(messageTokens[0].compareTo("move") == 0) // rec. move...
 public void sendByeMessage()
 { // etc….. 
 }
-public void sendDetailsForMessage(UUID remId, Vector3 pos)
+public void sendDetailsForMessage(UUID remId, Vector3f pos)
 { // etc….. 
 }
-public void sendMoveMessage(Vector3 pos)
-{ // etc….. 
-}
+	public void sendMoveMessage(Vector3 pos)
+	{
+		try
+		{
+			String message = new String("move," + id.toString());
+			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 }

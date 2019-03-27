@@ -40,7 +40,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			}
 			// case where server receives a CREATE message
 			// format: create,localid,x,y,z
-			if(msgTokens[0].compareTo("create") == 0)
+			else if(msgTokens[0].compareTo("create") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
@@ -49,11 +49,17 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			}
 			// case where server receives a BYE message
 			// format: bye,localid
-			if(msgTokens[0].compareTo("bye") == 0)
+			else if(msgTokens[0].compareTo("bye") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				sendByeMessages(clientID);
 				removeClient(clientID);
+			}
+			else if (msgTokens[0].compareTo("move") == 0)
+			{
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
+				System.out.println(clientID.toString() + " moved to x: " + pos[0] + " y: " + pos[1] + " z: " + pos[2]);
 			}
 		}
 	}

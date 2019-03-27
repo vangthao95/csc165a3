@@ -272,7 +272,7 @@ public class MyGame extends VariableFrameRateGame {
 		Action incrementCounter = new IncrementCounterAction(this);
 		Action CameraLookLeftRightA = new CameraLookLeftRightAction(camera);
 		Action cameraLookUpDownA = new CameraLookUpDownAction(camera);
-		Action p1MoveForwardA = new MoveForwardAction(dolphinN1);
+		Action p1MoveForwardA = new MoveForwardAction(dolphinN1, protClient);
 		Action p1MoveBackwardA = new MoveBackwardAction(dolphinN1);
 		Action p1MoveLeftA = new MoveLeftAction(dolphinN1);
 		Action p1MoveRightA = new MoveRightAction(dolphinN1);
