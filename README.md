@@ -5,3 +5,9 @@
 2. Run run-server.bat
 3. Run run.bat
 
+### TODO: 
+1. Skybox
+2. Scripting
+
+### In-Progress
+1. Networking
