@@ -170,12 +170,15 @@ public class MyGame extends VariableFrameRateGame {
 		}
 		else
 		{
-			if (protClient != null)
-				System.out.println("Connected");
 			// ask client protocol to send initial join message
 			//to server, with a unique identifier for this client
 			protClient.sendJoinMessage();
 		}
+	}
+	
+	public void setIsConnected(boolean value)
+	{
+		isClientConnected = value;
 	}
 	
 	protected void processNetworking(float elapsTime)

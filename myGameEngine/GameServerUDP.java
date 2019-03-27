@@ -60,6 +60,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				System.out.println(clientID.toString() + " moved to x: " + pos[0] + " y: " + pos[1] + " z: " + pos[2]);
+				sendMoveMessages(clientID, pos);
 			}
 		}
 	}
@@ -94,16 +95,28 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			e.printStackTrace();
 		}
 	}
-public void sndDetailsMsg(UUID clientID, UUID remoteId, String[] position)
-{ // etc…..
-}
-public void sendWantsDetailsMessages(UUID clientID)
-{ // etc…..
-}
-public void sendMoveMessages(UUID clientID, String[] position)
-{ // etc…..
-}
-public void sendByeMessages(UUID clientID)
-{ // etc…..
-}
+	public void sndDetailsMsg(UUID clientID, UUID remoteId, String[] position)
+	{ // etc…..
+	}
+	public void sendWantsDetailsMessages(UUID clientID)
+	{ // etc…..
+	}
+	public void sendMoveMessages(UUID clientID, String[] position)
+	{ 
+		try
+		{
+			String message = new String("move," + clientID.toString());
+			message += "," + position[0];
+			message += "," + position[1];
+			message += "," + position[2];
+			forwardPacketToAll(message, clientID);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	public void sendByeMessages(UUID clientID)
+	{ // etc…..
+	}
 }
