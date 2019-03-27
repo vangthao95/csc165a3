@@ -12,9 +12,9 @@ import myGame.*;
 
 public class ProtocolClient extends GameConnectionClient
 {
-	private MyGame game;
-	private UUID id;
-	private Vector<GhostAvatar> ghostAvatars;
+	private MyGame game; // Used to call functions like create ghost avatar
+	private UUID id; // Unique id for each player
+	private Vector<GhostAvatar> ghostAvatars; // Store ghost avatars of all other players
 	
 	public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game)
 	throws IOException
@@ -29,10 +29,13 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		String strMessage = (String)msg;
 		String[] messageTokens = strMessage.split(",");
+		
+		// Message processing
+		// 0th Index contains type of message
 		if(messageTokens.length > 0)
 		{
 			if(messageTokens[0].compareTo("join") == 0) // receive join
-			{ // format: join, success or join, failure
+			{ // format: join,success or join,failure
 				if(messageTokens[1].compareTo("success") == 0)
 				{
 					System.out.println("Connected to server successfully");
@@ -46,12 +49,12 @@ public class ProtocolClient extends GameConnectionClient
 				}
 			}
 			else if(messageTokens[0].compareTo("bye") == 0) // receive bye
-			{ // format: bye, remoteId
+			{ // format: bye,remoteId
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				//removeGhostAvatar(ghostID);
 			}
 			else if (messageTokens[0].compareTo("create")==0)
-			{ // format: create, remoteId, x,y,z or dsfr, remoteId, x,y,z
+			{ // format: create,remoteId,x,y,z
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				Vector3 ghostPosition = Vector3f.createFrom(
 					Float.parseFloat(messageTokens[2]),
@@ -61,23 +64,24 @@ public class ProtocolClient extends GameConnectionClient
 				createGhostAvatar(ghostID, ghostPosition);
 			}
 			else if (messageTokens[0].compareTo("move") == 0)
-			{
+			{ // format: move,remoteId,x,y,z
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				Vector3 ghostPosition = Vector3f.createFrom(
 					Float.parseFloat(messageTokens[2]),
 					Float.parseFloat(messageTokens[3]),
 					Float.parseFloat(messageTokens[4]));
-				System.out.println("Received new move message for user " + ghostID.toString());
+					
+				//System.out.println("Received new move message for user " + ghostID.toString());
 				updateGhostAvatars(ghostID, ghostPosition);
 			}
 			else if (messageTokens[0].compareTo("wantRequest") == 0)
-			{
+			{ // format: wantRequest,requestorId
 				System.out.println("Detail requested from server");
-				wantRequestReply(messageTokens[1]);
+				sendWantRequestReply(messageTokens[1]);
 			}
 		}
 	}
-	public void sendJoinMessage() // format: join, localId
+	public void sendJoinMessage() // format: join,localId
 	{
 		try
 		{
@@ -91,7 +95,7 @@ public class ProtocolClient extends GameConnectionClient
 	}
 	
 	public void sendDetailsRequest()
-	{
+	{ // format: (wantRequest,localId)
 		try
 		{
 			System.out.println("Requesting details from all connected clients");
@@ -104,7 +108,7 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	public void sendCreateMessage(Vector3 pos)
-	{ // format: (create, localId, x,y,z)
+	{ // format: (create,localId,x,y,z)
 		try
 		{
 			String message = new String("create," + id.toString());
@@ -123,14 +127,14 @@ public class ProtocolClient extends GameConnectionClient
 	{ // etc….. 
 	}
 	public void sendMoveMessage(Vector3 pos)
-	{
+	{ // format: (move,localId,x,y,z)
 		try
 		{
 			String message = new String("move," + id.toString());
 			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
 			sendPacket(message);
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
@@ -138,16 +142,6 @@ public class ProtocolClient extends GameConnectionClient
 	
 	public void createGhostAvatar(UUID newPlayerID, Vector3 pos)
 	{
-		/*if (ghostAvatars != null)
-		{
-			Iterator iterate_value = ghostAvatars.iterator();
-			while (iterate_value.hasNext())
-			{
-				GhostAvatar current = (GhostAvatar)iterate_value.next();
-				if (current.getID() == newPlayerID)
-					return;
-			}
-		}*/
 		try
 		{
 			GhostAvatar newPlayer = new GhostAvatar(newPlayerID);
@@ -162,25 +156,19 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	
-	// Data format:
-	// [0] type of request
-	// [1] requestee (self)
-	// [2] requestor (client requesting the details)
-	// [3] x position
-	// [4] y position
-	// [5] z position
-	public void wantRequestReply(String clientRequestingDetails)
-	{
+	public void sendWantRequestReply(String requestorId)
+	{ // format: (wantReply,localId,requestorId,x,y,z)
 		try
 		{	
 			String message = new String("wantReply," + id.toString());
-			message += "," + clientRequestingDetails;
+			message += "," + requestorId;
 			Vector3 pos = game.getPlayerPosition();
 			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
 			sendPacket(message);
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
+			System.out.println("Error creating detail request reply");
 			e.printStackTrace();
 		}
 		
@@ -188,20 +176,22 @@ public class ProtocolClient extends GameConnectionClient
 
 	public void updateGhostAvatars(UUID ghostID, Vector3 pos)
 	{
-		for (int i = 0; i < ghostAvatars.size(); i++)
+		try
 		{
-			GhostAvatar currElem = ghostAvatars.elementAt(i);
-			System.out.println(ghostID.toString() + " checking " + currElem.getID().toString());
-			if (currElem.getID().toString().compareTo(ghostID.toString()) == 0)
+			for (int i = 0; i < ghostAvatars.size(); i++)
 			{
-				System.out.println("Found");
-				currElem.setPos(pos);
-				return;
-			}
-			else
-			{
-				System.out.println("Not found");
-			}
+				GhostAvatar currElem = ghostAvatars.elementAt(i);
+				System.out.println(ghostID.toString() + " checking " + currElem.getID().toString());
+				if (currElem.getID().toString().compareTo(ghostID.toString()) == 0)
+				{
+					currElem.setPos(pos);
+					return;
+				}
+			}	
+		}
+		catch (Exception e)
+		{
+			System.out.println("Error updating ghost avatars");
 		}
 	}
 }

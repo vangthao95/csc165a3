@@ -46,7 +46,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				System.out.println("Received create message from id: " + clientID.toString()) ;
 				sendCreateMessages(clientID, pos);
-				//sendWantsDetailsMessages(clientID);
 			}
 			// case where server receives a BYE message
 			// format: bye,localid
@@ -57,6 +56,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				sendByeMessages(clientID);
 				removeClient(clientID);
 			}
+			// format: move,localId,x,y,z,
 			else if (msgTokens[0].compareTo("move") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
@@ -64,6 +64,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				System.out.println(clientID.toString() + " moved to x: " + pos[0] + " y: " + pos[1] + " z: " + pos[2]);
 				sendMoveMessages(clientID, pos);
 			}
+			// format: wantReply,localId,requestorId,x,y,z
 			else if (msgTokens[0].compareTo("wantReply") == 0)
 			{
 				UUID requestee = UUID.fromString(msgTokens[1]);
@@ -72,6 +73,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				String[] pos = {msgTokens[3], msgTokens[4], msgTokens[5]};
 				sendWantsDetailsReplies(requestor, requestee, pos);
 			}
+			// format: wantRequest,requestorId
 			else if (msgTokens[0].compareTo("wantRequest") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
@@ -80,7 +82,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 	}
 	public void sendJoinedMessage(UUID clientID, boolean success)
-	{ // format: join, success or join, failure
+	{ // format: join,success or join,failure
 		try
 		{
 			String message = new String("join,");
@@ -92,11 +94,12 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 		catch (IOException e)
 		{
+			System.out.println("Error creating join status reply");
 			e.printStackTrace();
 		}
 	}
 	public void sendCreateMessages(UUID clientID, String[] position)
-	{ // format: create, remoteId, x, y, z
+	{ // format: create,remoteId,x,y,z
 		try
 		{
 			String message = new String("create," + clientID.toString());
@@ -107,6 +110,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 		catch(IOException e)
 		{
+			System.out.println("Error creating create messages");
 			e.printStackTrace();
 		}
 	}
@@ -115,8 +119,9 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	}
 	
 	// Request details from all clients besides the current clientID
+	// requestorId here is localId
 	public void sendWantsDetailsMessages(UUID clientID)
-	{
+	{ // format: wantRequest,requestorId
 		try
 		{
 			System.out.println(clientID.toString() + " is requesting details for all other clients...");
@@ -125,12 +130,13 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 		catch(IOException e)
 		{
+			System.out.println("Error creating detail request message");
 			e.printStackTrace();
 		}
 	}
 	
 	public void sendWantsDetailsReplies(UUID requestor, UUID requestee, String[] position)
-	{
+	{ // format: create,localId,x,y,z
 		try
 		{
 			System.out.println("Sending details reply from " + requestee.toString() + " to " + requestor.toString());
@@ -138,17 +144,16 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[0];
 			message += "," + position[1];
 			message += "," + position[2];
-			System.out.println("	" + requestee.toString());
-			System.out.println("	" + message);
 			sendPacket(message, requestor);
 		}
-		catch(Exception e)
+		catch(IOException e)
 		{
+			System.out.println("Error creating message for detail replies");
 			e.printStackTrace();
 		}
 	}
 	public void sendMoveMessages(UUID clientID, String[] position)
-	{ 
+	{ // format: move,localId,x,y,z
 		try
 		{
 			String message = new String("move," + clientID.toString());
@@ -159,6 +164,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 		catch (IOException e)
 		{
+			System.out.println("Error creating send move messages");
 			e.printStackTrace();
 		}
 	}
