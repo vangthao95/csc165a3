@@ -22,6 +22,7 @@ import ray.rage.rendersystem.states.*;
 import ray.rage.asset.texture.*;
 import ray.input.*;
 import ray.input.action.*;
+import java.awt.geom.*;
 // -----------------------------------------------
 
 import ray.rage.rendersystem.shader.GpuShaderProgram; // For GpuShaderProgram
@@ -62,6 +63,9 @@ public class MyGame extends VariableFrameRateGame {
 	private Camera camera, camera2;
 	private SceneNode dolphinN1, dolphinN2;
 	private SceneNode cameraN1, cameraN2;
+	// skybox
+	private static final String SKYBOX_NAME = "MySkyBox";
+	private boolean skyBoxVisible = true;
 	// SceneNode array for storing the created planets
 	private SceneNode planetNodes[];
 	// Boolean array to keep track of status of each planet 
@@ -238,6 +242,43 @@ public class MyGame extends VariableFrameRateGame {
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
 	{
+    	
+    	
+    	// set up sky box
+    	Configuration conf = eng.getConfiguration();
+    	TextureManager tm = getEngine().getTextureManager();
+    	tm.setBaseDirectoryPath(conf.valueOf("assets.skyboxes.path"));
+    	Texture front = tm.getAssetByPath("zpos.png");
+    	Texture back = tm.getAssetByPath("zneg.png");
+    	Texture left = tm.getAssetByPath("xneg.png");
+    	Texture right = tm.getAssetByPath("xpos.png");
+    	Texture top = tm.getAssetByPath("ypos.png");
+    	Texture bottom = tm.getAssetByPath("yneg.png");
+    	 tm.setBaseDirectoryPath(conf.valueOf("assets.textures.path"));
+    	 
+    	// cubemap textures are flipped upside-down.
+    	// All textures must have the same dimensions, so any image’s
+    	// heights will work since they are all the same height
+    	AffineTransform xform = new AffineTransform();
+    	xform.translate(0, front.getImage().getHeight());
+    	xform.scale(1d, -1d);
+    	front.transform(xform);
+    	back.transform(xform);
+    	left.transform(xform);
+    	right.transform(xform);
+    	top.transform(xform);
+    	bottom.transform(xform);
+    	SkyBox sb = sm.createSkyBox(SKYBOX_NAME);
+    	sb.setTexture(front, SkyBox.Face.FRONT);
+    	sb.setTexture(back, SkyBox.Face.BACK);
+    	sb.setTexture(left, SkyBox.Face.LEFT);
+    	sb.setTexture(right, SkyBox.Face.RIGHT);
+    	sb.setTexture(top, SkyBox.Face.TOP);
+    	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
+    	sm.setActiveSkyBox(sb);
+    	
+    	
+    	
 		sceneManager = sm;
 		
 		Entity dolphinE1 = sm.createEntity("dolphinE1", "dolphinHighPoly.obj");
