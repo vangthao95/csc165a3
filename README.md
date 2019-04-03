@@ -11,7 +11,9 @@
 
 ### In-Progress
 1. Networking (90% done)
-  - Mostly done, just need to figure out what kind of information we want to send between clients.
+  -
+    - Mostly done, just need to figure out what kind of information we want to send between clients.
 2. Skybox
 3. Scripting (30% done)
-  - Script capability added to game.
+  -
+    - Script capability added to game.
