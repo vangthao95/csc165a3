@@ -7,8 +7,9 @@
 4. To open another client to test multiplayer, run run.bat again.
 
 ### TODO: 
-1. Skybox
-2. Scripting
+1. Modelling
 
 ### In-Progress
 1. Networking
+2. Skybox
+3. Scripting
