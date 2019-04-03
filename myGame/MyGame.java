@@ -55,6 +55,19 @@ import java.util.List;
 // Scripting end
 
 public class MyGame extends VariableFrameRateGame {
+	// Script files
+	File rotationD2RC = new File("scripts/InitParams.js");
+	File helloWorldS = new File("scripts/hello.js");
+	// End of script files
+
+	// Variables associated with scripts
+	ScriptEngineManager factory = new ScriptEngineManager();
+	ScriptEngine jsEngine = factory.getEngineByName("js"); // Game engine
+	RotationController dolphin2RC; // InitParam.js
+	Long rotationD2RCLastModifiedTime; // Modified time for rotationD2RC script
+	
+	// End of variables associated with scripts
+	
 	private static final int MAX_PLANETS = 20;
 	private static final int TICK_RATE_IN_MS = 150; // Used for hp gain and loss while inside and outside box ship
 	private static final int PLANET_VISITS_REQUIRED = 4; // visit 3 planets to win
@@ -166,13 +179,13 @@ public class MyGame extends VariableFrameRateGame {
         }
 		
     }
-	
-	private void executeScript(ScriptEngine engine, String scriptFileName)
+
+	private void executeScript(File scriptFileName)
 	{
 		try
 		{
 			FileReader fileReader = new FileReader(scriptFileName);
-			engine.eval(fileReader); //execute the script statements in the file
+			jsEngine.eval(fileReader); //execute the script statements in the file
 			fileReader.close();
 		}
 		catch (FileNotFoundException e1)
@@ -192,6 +205,7 @@ public class MyGame extends VariableFrameRateGame {
 			System.out.println ("Null ptr exception in " + scriptFileName + e4);
 		}
 	}
+	
 	
 	private void setupNetworking()
 	{
@@ -280,8 +294,8 @@ public class MyGame extends VariableFrameRateGame {
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
 	{
+		/*
     	ScriptEngineManager factory = new ScriptEngineManager();
-		String scriptFileName = "scripts/hello.js";
 		// get a list of the script engines on this platform
 		List<ScriptEngineFactory> list = factory.getEngineFactories();
 		System.out.println("Script Engine Factories found:");
@@ -290,11 +304,17 @@ public class MyGame extends VariableFrameRateGame {
 			System.out.println(" Name = " + f.getEngineName()
 			+ " language = " + f.getLanguageName()
 			+ " extensions = " + f.getExtensions());
-		}
-		// get the JavaScript engine
-		ScriptEngine jsEngine = factory.getEngineByName("js");
-		// run the script
-		executeScript(jsEngine, scriptFileName);
+		}*/
+		
+		// run hello world script
+		executeScript(helloWorldS);
+		
+		// Run the InitParams.js script to initialize spinSpeed
+		executeScript(rotationD2RC);
+		rotationD2RCLastModifiedTime = rotationD2RC.lastModified();
+		// Initialize the rotation controller with the variable spinSpeed
+		dolphin2RC = new RotationController(Vector3f.createUnitVectorY(),
+				((Double)(jsEngine.get("spinSpeed"))).floatValue());
     	
     	// set up sky box
     	Configuration conf = eng.getConfiguration();
@@ -349,6 +369,9 @@ public class MyGame extends VariableFrameRateGame {
         dolphinN2.moveForward(1.0f);
         dolphinN2.attachObject(dolphinE2);
         dolphinN2.moveUp(.25f);
+		// Add dolphin 2 to rotation controller
+		dolphin2RC.addNode(dolphinN2);
+		sm.addController(dolphin2RC);
 
         sm.getAmbientLight().setIntensity(new Color(.2f, .2f, .2f));
 	
@@ -1444,5 +1467,15 @@ public class MyGame extends VariableFrameRateGame {
 				tickDownHp2 = 0f;
 			}
 		}
-	}
+		
+		// run script again in update() to demonstrate dynamic modification
+		long modTime = rotationD2RC.lastModified();
+		if (modTime > rotationD2RCLastModifiedTime)
+		{
+			rotationD2RCLastModifiedTime = modTime;
+			executeScript(rotationD2RC);
+			dolphin2RC.setSpeed(((Double)(jsEngine.get("spinSpeed"))).floatValue());
+			System.out.println("Dolphin 2 rotation speed updated");
+		}
+	} // End of update()
 }
