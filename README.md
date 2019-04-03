@@ -18,3 +18,5 @@
 
 3. Scripting (60% done)
      - Player 2's dolphin is now rotating. The rotation speed can be updated in realtime by editing the variable "spinSpeed " in the file "scripts/InitParams.js".
+4. Terrain (20% done)
+     - Added basic terrain but there is no detection of height.
