@@ -2,7 +2,10 @@ package myGame;
 
 import myGameEngine.*;
 // --------------From DolphinClick---------------
-import java.awt.*;
+//import java.awt.*; // Split into Color, DisplayMode, and GraphicsEnvironment
+import java.awt.Color;
+import java.awt.DisplayMode;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.*;
 import java.io.*;
 
@@ -48,6 +51,7 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.*;
+import java.util.List;
 // Scripting end
 
 public class MyGame extends VariableFrameRateGame {
@@ -151,20 +155,6 @@ public class MyGame extends VariableFrameRateGame {
     public static void main(String[] args)
 	{
         Game game = new MyGame(args[0], Integer.parseInt(args[1]));
-		ScriptEngineManager factory = new ScriptEngineManager();
-		String scriptFileName = "hello.js";
-		// get a list of the script engines on this platform
-		//List<ScriptEngineFactory> list = factory.getEngineFactories();
-		//System.out.println("Script Engine Factories found:");
-		/*for (ScriptEngineFactory f : list)
-		{ System.out.println(" Name = " + f.getEngineName()
-		+ " language = " + f.getLanguageName()
-		+ " extensions = " + f.getExtensions());
-		}*/
- // get the JavaScript engine
- //ScriptEngine jsEngine = factory.getEngineByName("js");
- // run the script
- //m.executeScript(jsEngine, scriptFileName);
         try {
             game.startup();
             game.run();
@@ -178,21 +168,30 @@ public class MyGame extends VariableFrameRateGame {
     }
 	
 	private void executeScript(ScriptEngine engine, String scriptFileName)
- {
- try
- { FileReader fileReader = new FileReader(scriptFileName);
- engine.eval(fileReader); //execute the script statements in the file
- fileReader.close();
- }
- catch (FileNotFoundException e1)
- { System.out.println(scriptFileName + " not found " + e1); }
- catch (IOException e2)
- { System.out.println("IO problem with " + scriptFileName + e2); }
- catch (ScriptException e3)
- { System.out.println("ScriptException in " + scriptFileName + e3); }
- catch (NullPointerException e4)
- { System.out.println ("Null ptr exception in " + scriptFileName + e4); }
- }
+	{
+		try
+		{
+			FileReader fileReader = new FileReader(scriptFileName);
+			engine.eval(fileReader); //execute the script statements in the file
+			fileReader.close();
+		}
+		catch (FileNotFoundException e1)
+		{
+			System.out.println(scriptFileName + " not found " + e1);
+		}
+		catch (IOException e2)
+		{
+			System.out.println("IO problem with " + scriptFileName + e2);
+		}
+		catch (ScriptException e3)
+		{
+			System.out.println("ScriptException in " + scriptFileName + e3);
+		}
+		catch (NullPointerException e4)
+		{
+			System.out.println ("Null ptr exception in " + scriptFileName + e4);
+		}
+	}
 	
 	private void setupNetworking()
 	{
@@ -281,7 +280,21 @@ public class MyGame extends VariableFrameRateGame {
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
 	{
-    	
+    	ScriptEngineManager factory = new ScriptEngineManager();
+		String scriptFileName = "scripts/hello.js";
+		// get a list of the script engines on this platform
+		List<ScriptEngineFactory> list = factory.getEngineFactories();
+		System.out.println("Script Engine Factories found:");
+		for (ScriptEngineFactory f : list)
+		{
+			System.out.println(" Name = " + f.getEngineName()
+			+ " language = " + f.getLanguageName()
+			+ " extensions = " + f.getExtensions());
+		}
+		// get the JavaScript engine
+		ScriptEngine jsEngine = factory.getEngineByName("js");
+		// run the script
+		executeScript(jsEngine, scriptFileName);
     	
     	// set up sky box
     	Configuration conf = eng.getConfiguration();
