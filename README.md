@@ -16,5 +16,5 @@
   
 2. Skybox
 
-3. Scripting (30% done)
-     - Script capability added to game.
+3. Scripting (60% done)
+     - Player 2's dolphin is now rotating. The rotation speed can be updated in realtime by editing the variable "spinSpeed " in the file "scripts/InitParams.js".
