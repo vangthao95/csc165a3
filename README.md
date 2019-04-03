@@ -12,6 +12,7 @@
 ### In-Progress
 1. Networking (90% done)
      - Mostly done, just need to figure out what kind of information we want to send between clients.
+     - Tested on lab computer TETRIS and GALIGA
   
 2. Skybox
 
