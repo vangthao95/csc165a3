@@ -384,6 +384,14 @@ public class MyGame extends VariableFrameRateGame {
 		setupNetworking();
 		setupInputs();
 		setupOrbitCamera(eng, sm);
+		Tessellation tessE = sm.createTessellation("tessE", 6);
+		// subdivisions per patch: min=0, try up to 32
+		tessE.setSubdivisions(8f);
+		SceneNode tessN = sm.getRootSceneNode().createChildSceneNode("TessN");
+		tessN.attachObject(tessE);
+		tessN.scale(10, 20, 10);
+		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
+		tessE.setTexture(this.getEngine(), "ground1.jpg");
     }
     
     protected void setupInputs()
@@ -857,9 +865,9 @@ public class MyGame extends VariableFrameRateGame {
 		zAxisN.attachObject(zAxis);
 		zAxis.setPrimitive(Primitive.LINES);
 		
-		ManualObject ground = makeGround(eng, sm);
-		SceneNode groundN = sm.getRootSceneNode().createChildSceneNode("groundNode");
-		groundN.attachObject(ground);
+		//ManualObject ground = makeGround(eng, sm);
+		//SceneNode groundN = sm.getRootSceneNode().createChildSceneNode("groundNode");
+		//groundN.attachObject(ground);
 		
 	}
 	
