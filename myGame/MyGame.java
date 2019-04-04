@@ -391,7 +391,7 @@ public class MyGame extends VariableFrameRateGame {
 		tessN.attachObject(tessE);
 		tessN.scale(20, 40, 20);
 		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
-		tessE.setTexture(this.getEngine(), "ground1.jpg");
+		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
     }
     
     protected void setupInputs()
@@ -779,7 +779,7 @@ public class MyGame extends VariableFrameRateGame {
 	}
 	
 	// now we add setting up viewports in the window
-	protected void setupWindowViewports(RenderWindow rw)
+	/*protected void setupWindowViewports(RenderWindow rw)
 	{
 		rw.addKeyListener(this);
 		Viewport topViewport = rw.getViewport(0);
@@ -787,7 +787,7 @@ public class MyGame extends VariableFrameRateGame {
 		topViewport.setClearColor(new Color(1.0f, .7f, .7f));
 		Viewport botViewport = rw.createViewport(.01f, .01f, .99f, .49f);
 		botViewport.setClearColor(new Color(.5f, 1.0f, .5f));
-	}
+	}*/
 
     @Override
     protected void setupCameras(SceneManager sm, RenderWindow rw) {	   	
@@ -803,7 +803,7 @@ public class MyGame extends VariableFrameRateGame {
     	camera.getFrustum().setFarClipDistance(1000.0f);
 		camera.setMode('n');
     	
-    	camera2 = sm.createCamera("MainCamera2",Projection.PERSPECTIVE);
+    	/*camera2 = sm.createCamera("MainCamera2",Projection.PERSPECTIVE);
     	rw.getViewport(1).setCamera(camera2);
 		camera2.setRt((Vector3f)Vector3f.createFrom(1.0f, 0.0f, 0.0f));
 		camera2.setUp((Vector3f)Vector3f.createFrom(0.0f, 1.0f, 0.0f));
@@ -812,7 +812,7 @@ public class MyGame extends VariableFrameRateGame {
 		cameraN2 = rootNode.createChildSceneNode("MaincameraN12");
     	cameraN2.attachObject(camera2);
     	camera.getFrustum().setFarClipDistance(1000.0f);
-    	camera2.setMode('n');
+    	camera2.setMode('n');*/
     }
 	
     protected void setupOrbitCamera(Engine eng, SceneManager sm)
@@ -820,7 +820,7 @@ public class MyGame extends VariableFrameRateGame {
     	String gpName = im.getFirstGamepadName();
 		String kbName = im.getKeyboardName();
 		orbitController1 = new Camera3Pcontroller(camera, cameraN1, dolphinN1, kbName, im);
-    	orbitController2 = new Camera3Pcontroller(camera2, cameraN2, dolphinN2, gpName, im);
+    	//orbitController2 = new Camera3Pcontroller(camera2, cameraN2, dolphinN2, gpName, im);
     }
     
     
@@ -1346,7 +1346,7 @@ public class MyGame extends VariableFrameRateGame {
 		im.update(elapsTime);
 		processNetworking(elapsTime);
 		orbitController1.updateCameraPosition();
-		orbitController2.updateCameraPosition();
+		//orbitController2.updateCameraPosition();
 		rs = (GL4RenderSystem) engine.getRenderSystem();
 		deltaTime = engine.getElapsedTimeMillis();
 		elapsTime += deltaTime;
