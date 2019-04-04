@@ -347,7 +347,7 @@ public class MyGame extends VariableFrameRateGame {
     	sb.setTexture(right, SkyBox.Face.RIGHT);
     	sb.setTexture(top, SkyBox.Face.TOP);
     	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
-    	//sm.setActiveSkyBox(sb);
+    	sm.setActiveSkyBox(sb);
     	
     	
     	
@@ -389,7 +389,7 @@ public class MyGame extends VariableFrameRateGame {
 		tessE.setSubdivisions(8f);
 		SceneNode tessN = sm.getRootSceneNode().createChildSceneNode("TessN");
 		tessN.attachObject(tessE);
-		tessN.scale(10, 20, 10);
+		tessN.scale(20, 40, 20);
 		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
 		tessE.setTexture(this.getEngine(), "ground1.jpg");
     }
