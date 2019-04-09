@@ -408,9 +408,9 @@ public class MyGame extends VariableFrameRateGame {
 		Action CameraLookLeftRightA = new CameraLookLeftRightAction(camera);
 		Action cameraLookUpDownA = new CameraLookUpDownAction(camera);
 		Action p1MoveForwardA = new MoveForwardAction(dolphinN1, protClient, this);
-		Action p1MoveBackwardA = new MoveBackwardAction(dolphinN1, protClient);
-		Action p1MoveLeftA = new MoveLeftAction(dolphinN1, protClient);
-		Action p1MoveRightA = new MoveRightAction(dolphinN1, protClient);
+		Action p1MoveBackwardA = new MoveBackwardAction(dolphinN1, protClient, this);
+		Action p1MoveLeftA = new MoveLeftAction(dolphinN1, protClient, this);
+		Action p1MoveRightA = new MoveRightAction(dolphinN1, protClient, this);
 
 		Action p2MoveVerticalA = new ControllerMoveHorizontalAction(dolphinN2);
 		Action p2MoveHorizontalA = new ControllerMoveVerticalAction(dolphinN2);
