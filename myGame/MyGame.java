@@ -127,7 +127,11 @@ public class MyGame extends VariableFrameRateGame {
 	private SceneManager sceneManager;
 	private int uniqueGhosts = 0;
 	
-
+	// Terrain Variables
+	private SceneNode tessN;
+	private Tessellation tessE;
+	// End of terrain variables
+	
     public MyGame(String serverAddr, int sPort)
 	{
         super();
@@ -384,10 +388,10 @@ public class MyGame extends VariableFrameRateGame {
 		setupNetworking();
 		setupInputs();
 		setupOrbitCamera(eng, sm);
-		Tessellation tessE = sm.createTessellation("tessE", 6);
+		tessE = sm.createTessellation("tessE", 6);
 		// subdivisions per patch: min=0, try up to 32
 		tessE.setSubdivisions(8f);
-		SceneNode tessN = sm.getRootSceneNode().createChildSceneNode("TessN");
+		tessN = sm.getRootSceneNode().createChildSceneNode("TessN");
 		tessN.attachObject(tessE);
 		tessN.scale(20, 40, 20);
 		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
@@ -403,7 +407,7 @@ public class MyGame extends VariableFrameRateGame {
 		Action incrementCounter = new IncrementCounterAction(this);
 		Action CameraLookLeftRightA = new CameraLookLeftRightAction(camera);
 		Action cameraLookUpDownA = new CameraLookUpDownAction(camera);
-		Action p1MoveForwardA = new MoveForwardAction(dolphinN1, protClient);
+		Action p1MoveForwardA = new MoveForwardAction(dolphinN1, protClient, this);
 		Action p1MoveBackwardA = new MoveBackwardAction(dolphinN1, protClient);
 		Action p1MoveLeftA = new MoveLeftAction(dolphinN1, protClient);
 		Action p1MoveRightA = new MoveRightAction(dolphinN1, protClient);
@@ -1486,4 +1490,29 @@ public class MyGame extends VariableFrameRateGame {
 			System.out.println("Dolphin 2 rotation speed updated");
 		}
 	} // End of update()
+	
+	public void updateVerticalPosition()
+	{
+		// dolphinN1
+		//SceneNode tessN = this.getEngine().getSceneManager().getSceneNode("tessN");
+		//Tessellation tessE = ((Tessellation) tessN.getAttachedObject("tessE"));
+		// Figure out Avatar's position relative to plane
+		Vector3 worldAvatarPosition = dolphinN1.getWorldPosition();
+		Vector3 localAvatarPosition = dolphinN1.getLocalPosition();
+		
+		// use avatar World coordinates to get coordinates for height
+		Vector3 newAvatarPosition = Vector3f.createFrom(
+			// Keep the X coordinate
+			localAvatarPosition.x(),
+			// The Y coordinate is the varying height
+			tessE.getWorldHeight(
+			worldAvatarPosition.x(),
+			worldAvatarPosition.z()),
+			//Keep the Z coordinate
+			localAvatarPosition.z()
+		);
+		
+		// use avatar Local coordinates to set position, including height
+		dolphinN1.setLocalPosition(newAvatarPosition);
+	}
 }
