@@ -357,7 +357,7 @@ public class MyGame extends VariableFrameRateGame {
     	
 		sceneManager = sm;
 		
-		Entity dolphinE1 = sm.createEntity("dolphinE1", "dolphinHighPoly.obj");
+		Entity dolphinE1 = sm.createEntity("dolphinE1", "avatar_v1.obj");
         dolphinE1.setPrimitive(Primitive.TRIANGLES);
         
 		Entity dolphinE2 = sm.createEntity("dolphinE2", "dolphinHighPoly.obj");
@@ -365,7 +365,7 @@ public class MyGame extends VariableFrameRateGame {
 
         dolphinN1 = sm.getRootSceneNode().createChildSceneNode(dolphinE1.getName() + "Node");
         dolphinN1.moveBackward(.5f);
-		//dolphinN1.scale(0.3f, 0.3f, 0.3f);
+		dolphinN1.scale(0.05f, 0.05f, 0.05f);
         dolphinN1.attachObject(dolphinE1);
 		dolphinN1.moveUp(.25f);
         
@@ -1360,7 +1360,7 @@ public class MyGame extends VariableFrameRateGame {
 		scoreStr1 = Integer.toString(score1);
 		counterStr2 = Integer.toString(counter2);
 		scoreStr2 = Integer.toString(score2);
-		if ((gameWon1 == false) && (gameWon2 == false))
+		/*if ((gameWon1 == false) && (gameWon2 == false))
 			dispStr1 = "Player 1 -- Health = " + hp1 + "   Time = " + elapsTimeStr + "   Planets visited = " + counterStr1 + "   Score = " + scoreStr1;
 		else if ((gameWon1 == true) && (gameWon2 == false))
 			dispStr1 = "You won!!!!    Final Score = " + scoreStr1;
@@ -1373,7 +1373,7 @@ public class MyGame extends VariableFrameRateGame {
 		else if (gameWon1 == true)
 			dispStr2 = "Player 1 has won...";
 		rs.setHUD(dispStr2, 15, 15);
-		rs.setHUD2(dispStr1, 15, 345);
+		rs.setHUD2(dispStr1, 15, 345);*/
 		// continually check for collision
 		if (onDolphin == true)
 		{
