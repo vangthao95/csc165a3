@@ -63,7 +63,7 @@ public class MyGame extends VariableFrameRateGame {
 	// Variables associated with scripts
 	ScriptEngineManager factory = new ScriptEngineManager();
 	ScriptEngine jsEngine = factory.getEngineByName("js"); // Game engine
-	RotationController dolphin2RC; // InitParam.js
+	RotationController testRC; // InitParam.js
 	Long rotationD2RCLastModifiedTime; // Modified time for rotationD2RC script
 	
 	// End of variables associated with scripts
@@ -76,7 +76,7 @@ public class MyGame extends VariableFrameRateGame {
 	private float elapsTime = 0.0f;
 	private int counter, score = 0;
 	private Camera camera;
-	private SceneNode dolphinN1, dolphinN2;
+	private SceneNode avatar1, object1;
 	private SceneNode cameraN1;
 	// skybox
 	private static final String SKYBOX_NAME = "MySkyBox";
@@ -263,7 +263,7 @@ public class MyGame extends VariableFrameRateGame {
 		executeScript(rotationD2RC);
 		rotationD2RCLastModifiedTime = rotationD2RC.lastModified();
 		// Initialize the rotation controller with the variable spinSpeed
-		dolphin2RC = new RotationController(Vector3f.createUnitVectorY(),
+		testRC = new RotationController(Vector3f.createUnitVectorY(),
 				((Double)(jsEngine.get("spinSpeed"))).floatValue());
     	
     	// set up sky box
@@ -303,37 +303,43 @@ public class MyGame extends VariableFrameRateGame {
     	
 		sceneManager = sm;
 		
-		Entity dolphinE1 = sm.createEntity("dolphinE1", "avatar_v1.obj");
-        dolphinE1.setPrimitive(Primitive.TRIANGLES);
+		Entity avatar1E1 = sm.createEntity("avatar1", "avatar_v1.obj");
+        avatar1E1.setPrimitive(Primitive.TRIANGLES);
         
-		Entity dolphinE2 = sm.createEntity("dolphinE2", "exporting-uv.obj");
-        dolphinE1.setPrimitive(Primitive.TRIANGLES);
+		Entity object1E1 = sm.createEntity("object1", "exporting-uv.obj");
+        avatar1E1.setPrimitive(Primitive.TRIANGLES);
 
-        dolphinN1 = sm.getRootSceneNode().createChildSceneNode(dolphinE1.getName() + "Node");
-        dolphinN1.moveBackward(.5f);
-		dolphinN1.scale(0.05f, 0.05f, 0.05f);
-        dolphinN1.attachObject(dolphinE1);
-		dolphinN1.moveUp(.25f);
+        avatar1 = sm.getRootSceneNode().createChildSceneNode(avatar1E1.getName() + "Node");
+        avatar1.moveBackward(.5f);
+		avatar1.scale(0.05f, 0.05f, 0.05f);
+        avatar1.attachObject(avatar1E1);
+		avatar1.moveUp(.25f);
         
-        dolphinN2 = sm.getRootSceneNode().createChildSceneNode(dolphinE2.getName() + "Node");
-        dolphinN2.moveForward(1.0f);
-        dolphinN2.attachObject(dolphinE2);
-        dolphinN2.moveUp(.25f);
+        object1 = sm.getRootSceneNode().createChildSceneNode(object1E1.getName() + "Node");
+        object1.moveForward(1.0f);
+        object1.attachObject(object1E1);
 		// Add dolphin 2 to rotation controller
-		dolphin2RC.addNode(dolphinN2);
-		sm.addController(dolphin2RC);
+		testRC.addNode(object1);
+		sm.addController(testRC);
 
-        sm.getAmbientLight().setIntensity(new Color(.2f, .2f, .2f));
+        //sm.getAmbientLight().setIntensity(new Color(.5f, .5f, .5f));
+		Light sunLight = sm.createLight("sunLight", Light.Type.POINT);
+		sunLight.setAmbient(new Color(.5f, .5f, .5f));
+        sunLight.setDiffuse(new Color(.7f, .7f, .7f));
+		sunLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
+        sunLight.setRange(10f);
+		
+		SceneNode sunLightNode = avatar1.createChildSceneNode("sunLightNode");
+        sunLightNode.attachObject(sunLight);
 	
         player1controller = new StretchController();
 		player2controller = new CustomController();
 		sm.addController(player1controller);
 		sm.addController(player2controller);
-		// setupPlanets(eng, sm);
-		// setupManualObjects(eng, sm);
 		setupNetworking();
 		setupInputs();
 		setupOrbitCamera(eng, sm);
+		
 		tessE = sm.createTessellation("tessE", 6);
 		// subdivisions per patch: min=0, try up to 32
 		tessE.setSubdivisions(8f);
@@ -353,13 +359,13 @@ public class MyGame extends VariableFrameRateGame {
 		Action incrementCounter = new IncrementCounterAction(this);
 		Action CameraLookLeftRightA = new CameraLookLeftRightAction(camera);
 		Action cameraLookUpDownA = new CameraLookUpDownAction(camera);
-		Action p1MoveForwardA = new MoveForwardAction(dolphinN1, protClient, this);
-		Action p1MoveBackwardA = new MoveBackwardAction(dolphinN1, protClient, this);
-		Action p1MoveLeftA = new MoveLeftAction(dolphinN1, protClient, this);
-		Action p1MoveRightA = new MoveRightAction(dolphinN1, protClient, this);
+		Action p1MoveForwardA = new MoveForwardAction(avatar1, protClient, this);
+		Action p1MoveBackwardA = new MoveBackwardAction(avatar1, protClient, this);
+		Action p1MoveLeftA = new MoveLeftAction(avatar1, protClient, this);
+		Action p1MoveRightA = new MoveRightAction(avatar1, protClient, this);
 
-		Action p2MoveVerticalA = new ControllerMoveHorizontalAction(dolphinN2);
-		Action p2MoveHorizontalA = new ControllerMoveVerticalAction(dolphinN2);
+		Action p2MoveVerticalA = new ControllerMoveHorizontalAction(object1);
+		Action p2MoveHorizontalA = new ControllerMoveVerticalAction(object1);
     	
 		for (int i = 0; i < 10; i++)
 		{
@@ -465,7 +471,7 @@ public class MyGame extends VariableFrameRateGame {
     {
     	String gpName = im.getFirstGamepadName();
 		String kbName = im.getKeyboardName();
-		orbitController1 = new Camera3Pcontroller(camera, cameraN1, dolphinN1, kbName, im);
+		orbitController1 = new Camera3Pcontroller(camera, cameraN1, avatar1, kbName, im);
     }
 	
 	public void incrementCounter()
@@ -475,7 +481,7 @@ public class MyGame extends VariableFrameRateGame {
 
 	public Vector3 getPlayerPosition()
 	{
-		return dolphinN1.getLocalPosition();
+		return avatar1.getLocalPosition();
 	}
 	
 	@Override
@@ -493,19 +499,19 @@ public class MyGame extends VariableFrameRateGame {
 		{
 			rotationD2RCLastModifiedTime = modTime;
 			executeScript(rotationD2RC);
-			dolphin2RC.setSpeed(((Double)(jsEngine.get("spinSpeed"))).floatValue());
+			testRC.setSpeed(((Double)(jsEngine.get("spinSpeed"))).floatValue());
 			System.out.println("Dolphin 2 rotation speed updated");
 		}
 	} // End of update()
 	
 	public void updateVerticalPosition()
 	{
-		// dolphinN1
+		// avatar1
 		//SceneNode tessN = this.getEngine().getSceneManager().getSceneNode("tessN");
 		//Tessellation tessE = ((Tessellation) tessN.getAttachedObject("tessE"));
 		// Figure out Avatar's position relative to plane
-		Vector3 worldAvatarPosition = dolphinN1.getWorldPosition();
-		Vector3 localAvatarPosition = dolphinN1.getLocalPosition();
+		Vector3 worldAvatarPosition = avatar1.getWorldPosition();
+		Vector3 localAvatarPosition = avatar1.getLocalPosition();
 		
 		// use avatar World coordinates to get coordinates for height
 		Vector3 newAvatarPosition = Vector3f.createFrom(
@@ -520,6 +526,6 @@ public class MyGame extends VariableFrameRateGame {
 		);
 		
 		// use avatar Local coordinates to set position, including height
-		dolphinN1.setLocalPosition(newAvatarPosition);
+		avatar1.setLocalPosition(newAvatarPosition);
 	}
 }
