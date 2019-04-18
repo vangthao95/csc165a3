@@ -214,11 +214,12 @@ public class MyGame extends VariableFrameRateGame {
 		if (avatar != null)
 		{
 			uniqueGhosts++;
-			Entity ghostE = sceneManager.createEntity("ghost" + uniqueGhosts, "dolphinHighPoly.obj");
+			Entity ghostE = sceneManager.createEntity("ghost" + uniqueGhosts, "avatar_v1.obj");
 			ghostE.setPrimitive(Primitive.TRIANGLES);
 			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
 			ghostN.attachObject(ghostE);
 			ghostN.setLocalPosition(pos);
+			ghostN.scale(0.05f, 0.05f, 0.05f);
 			avatar.setNode(ghostN);
 		}
 	}
