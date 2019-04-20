@@ -6,17 +6,3 @@
 3. Run run.bat
 4. To open another client to test multiplayer, run run.bat again.
 
-### TODO: 
-1. Modelling
-
-### In-Progress
-1. Networking (90% done)
-     - Mostly done, just need to figure out what kind of information we want to send between clients.
-     - Tested on lab computer TETRIS and GALIGA
-  
-2. Skybox
-
-3. Scripting (60% done)
-     - Player 2's dolphin is now rotating. The rotation speed can be updated in realtime by editing the variable "spinSpeed " in the file "scripts/InitParams.js".
-4. Terrain (20% done)
-     - Added basic terrain but there is no detection of height.
