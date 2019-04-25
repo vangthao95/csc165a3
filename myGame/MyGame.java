@@ -54,7 +54,27 @@ import java.io.*;
 import java.util.List;
 // Scripting end
 
+// Physics begin
+import ray.physics.PhysicsEngine;
+import ray.physics.PhysicsObject;
+import ray.physics.PhysicsEngineFactory;
+// Physics end
 public class MyGame extends VariableFrameRateGame {
+	// NPCs variables
+	private int uniqueGhostNPCs = 0;
+	//
+	
+	
+	
+	// Physics variables
+	private SceneNode ball1Node, ball2Node, gndNode;
+	private PhysicsEngine physicsEng;
+	private PhysicsObject ball1PhysObj, ball2PhysObj, gndPlaneP;
+	private boolean running = false;
+	private final static String GROUND_E = "Ground";
+	private final static String GROUND_N = "GroundNode";
+	// End of Physics variables
+	
 	// Script files
 	File rotationD2RC = new File("scripts/InitParams.js");
 	File helloWorldS = new File("scripts/hello.js");
@@ -224,6 +244,23 @@ public class MyGame extends VariableFrameRateGame {
 		}
 	}
 	
+	// NPC function
+	public void addGhostNPCtoGameWorld(GhostNPC ghostAvatar, Vector3 pos)
+	throws IOException
+	{
+		if (ghostAvatar != null)
+		{
+			uniqueGhostNPCs++;
+			Entity ghostE = sceneManager.createEntity("ghostNPC" + uniqueGhostNPCs, "avatar_v1.obj");
+			ghostE.setPrimitive(Primitive.TRIANGLES);
+			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
+			ghostN.attachObject(ghostE);
+			ghostN.setLocalPosition(pos);
+			ghostN.scale(0.05f, 0.05f, 0.05f);
+			avatar.setNode(ghostN);
+		}
+	}
+	
 	public void removeGhostAvatarFromGameWorld(GhostAvatar avatar)
 	{
 		//if(avatar != null) gameObjectsToRemove.add(avatar.getID());
@@ -245,6 +282,23 @@ public class MyGame extends VariableFrameRateGame {
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
 	{
+		// Physics test objects
+		// Ball 1
+		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
+		ball1Node = rootNode.createChildSceneNode("Ball1Node");
+		ball1Node.attachObject(ball1Entity);
+		ball1Node.setLocalPosition(0, 2, -2);
+		// Ball 2
+		Entity ball2Entity = sm.createEntity("Ball2", meshFilename);
+		ball2Node = rootNode.createChildSceneNode("Ball2Node");
+		ball2Node.attachObject(ball2Entity);
+		ball2Node.setLocalPosition(-1,10,-2);
+		// Ground plane
+		Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
+		groundNode = rootNode.createChildSceneNode(GROUND_N);
+		groundNode.attachObject(groundEntity
+		// End of physics test objects
+		
 		/*
     	ScriptEngineManager factory = new ScriptEngineManager();
 		// get a list of the script engines on this platform
@@ -349,8 +403,48 @@ public class MyGame extends VariableFrameRateGame {
 		tessN.scale(20, 40, 20);
 		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
+		
+		// Physics
+		initPhysicsSystem();
+		createRagePhysicsWorld();
     }
+	
+	// Physics Function
+	private void initPhysicsSystem()
+	{
+		String engine = "ray.physics.JBullet.JBulletPhysicsEngine";
+		float[] gravity = {0, -3f, 0};
+		physicsEng = PhysicsEngineFactory.createPhysicsEngine(engine);
+		physicsEng.initSystem();
+		physicsEng.setGravity(gravity);
+	}
     
+	// Physics Function
+	private void createRagePhysicsWorld()
+	{
+		float mass = 1.0f;
+		float up[] = {0,1,0};
+		double[] temptf;
+		temptf = toDoubleArray(ball1Node.getLocalTransform().toFloatArray());
+		ball1PhysObj = physicsEng.addSphereObject(physicsEngine.nextUID(),
+			mass, temptf, 2.0f);
+		ball1PhysObj.setBounciness(1.0f);
+		ball1Node.setPhysicsObject(ball1PhysObj);
+		temptf = toDoubleArray(ball2Node.getLocalTransform().toFloatArray());
+		ball2PhysObj = physicsEng.addSphereObject(physicsEngine.nextUID(),
+			mass, temptf, 2.0f);
+		ball2PhysicsObj.setBounciness(1.0f);
+		ball2Node.setPhysicsObject(ball2PhysicsObj);
+		temptf = toDoubleArray(gndNode.getLocalTransform().toFloatArray());
+		gndPlaneP = physicsEng.addStaticPlaneObject(physicsEng.nextUID(),
+			temptf, up, 0.0f);
+		gndPlaneP.setBounciness(1.0f);
+		gndNode.scale(3f, .05f, 3f);
+		gndNode.setLocalPosition(0, -7, -2);
+		gndNode.setPhysicsObject(gndPlaneP);
+		// can also set damping, friction, etc.
+	}
+	
     protected void setupInputs()
     {
     	im =  new GenericInputManager();
@@ -503,6 +597,23 @@ public class MyGame extends VariableFrameRateGame {
 			testRC.setSpeed(((Double)(jsEngine.get("spinSpeed"))).floatValue());
 			System.out.println("Dolphin 2 rotation speed updated");
 		}
+		
+		// Physics
+		float time = engine.getElapsedTimeMillis();
+		if (running)
+		{
+			Matrix4 mat;
+			physicsEngine.update(time);
+			for (SceneNode s : engine.getSceneManager().getSceneNodes())
+			{
+				if (s.getPhysicsObject() != null)
+				{
+					mat = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
+					s.setLocalPosition(mat.value(0,3), mat.value(1,3), mat.value(2,3));
+				}
+			}
+		}
+		// End of physics
 	} // End of update()
 	
 	public void updateVerticalPosition()
@@ -529,4 +640,50 @@ public class MyGame extends VariableFrameRateGame {
 		// use avatar Local coordinates to set position, including height
 		avatar1.setLocalPosition(newAvatarPosition);
 	}
+	
+	public void keyPressed(KeyEvent e)
+	{
+		switch (e.getKeyCode())
+		{
+			case KeyEvent.VK_SPACE:
+				if (running == false)
+				{
+					System.out.println("Starting Physics!");
+					running = true;
+				}
+				else
+				{
+					System.out.println("Stopping Physics!");
+					running = false;
+				}
+				break;
+		}
+		super.keyPressed(e);
+	}
+	
+	private float[] toFloatArray(double[] arr)
+	{
+		if (arr == null) return null;
+		int n = arr.length;
+		float[] ret = new float[n];
+		for (int i = 0; i < n; i++)
+		{
+			ret[i] = (float)arr[i];
+		}
+		return ret;
+	}
+		
+	private double[] toDoubleArray(float[] arr)
+	{
+			if (arr == null) return null;
+			int n = arr.length;
+			double[] ret = new double[n];
+			for (int i = 0; i < n; i++)
+			{
+				ret[i] = (double)arr[i];
+			}
+		return ret;
+	}
 }
+
+	
