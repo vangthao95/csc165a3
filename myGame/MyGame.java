@@ -59,7 +59,27 @@ import ray.physics.PhysicsEngine;
 import ray.physics.PhysicsObject;
 import ray.physics.PhysicsEngineFactory;
 // Physics end
-public class MyGame extends VariableFrameRateGame {
+
+import java.awt.*; // For mouse look
+import javax.swing.ImageIcon;
+public class MyGame extends VariableFrameRateGame implements MouseListener, MouseMotionListener {
+	// Mouse look variables
+	private Robot robot;
+	private boolean isRecentering = false;
+	private int prevMouseX;
+	private int prevMouseY;
+	private int centerX;
+	private int centerY;
+	private int curMouseX;
+	private int curMouseY;
+	private int left;
+	private int top;
+	private int widt;
+	private int hei;
+	private java.awt.Canvas canvas;
+	//
+	
+	
 	// NPCs variables
 	private int uniqueGhostNPCs = 0;
 	//
@@ -76,8 +96,8 @@ public class MyGame extends VariableFrameRateGame {
 	// End of Physics variables
 	
 	// Script files
-	File rotationD2RC = new File("InitParams.js");
-	File helloWorldS = new File("hello.js");
+	File rotationD2RC = new File("scripts/InitParams.js");
+	File helloWorldS = new File("scripts/hello.js");
 	// End of script files
 
 	// Variables associated with scripts
@@ -281,7 +301,7 @@ public class MyGame extends VariableFrameRateGame {
 	
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
-	{
+	{/*
 		// Physics test objects
 		// Ball 1
 		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
@@ -297,7 +317,7 @@ public class MyGame extends VariableFrameRateGame {
 		Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
 		groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
 		groundNode.attachObject(groundEntity);
-		// End of physics test objects
+		// End of physics test objects*/
 		
 		/*
     	ScriptEngineManager factory = new ScriptEngineManager();
@@ -320,7 +340,7 @@ public class MyGame extends VariableFrameRateGame {
 		// Initialize the rotation controller with the variable spinSpeed
 		testRC = new RotationController(Vector3f.createUnitVectorY(),
 				((Double)(jsEngine.get("spinSpeed"))).floatValue());
-    	/*
+    	
     	// set up sky box
     	Configuration conf = eng.getConfiguration();
     	TextureManager tm = getEngine().getTextureManager();
@@ -353,7 +373,7 @@ public class MyGame extends VariableFrameRateGame {
     	sb.setTexture(top, SkyBox.Face.TOP);
     	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
     	sm.setActiveSkyBox(sb);
-    	*/
+    	
     	
     	
 		sceneManager = sm;
@@ -405,14 +425,14 @@ public class MyGame extends VariableFrameRateGame {
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
 		
 		// Physics
-		initPhysicsSystem();
-		createRagePhysicsWorld();
+		//initPhysicsSystem();
+		//createRagePhysicsWorld();
     }
 	
 	// Physics Function
-	private void initPhysicsSystem()
+	/*private void initPhysicsSystem()
 	{
-		String engine = "ray.physics.JBullet.JBulletPhysicsEngine";
+		String engine = "JBullet";
 		float[] gravity = {0, -3f, 0};
 		physicsEng = PhysicsEngineFactory.createPhysicsEngine(engine);
 		physicsEng.initSystem();
@@ -443,7 +463,7 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode.setLocalPosition(0, -7, -2);
 		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
-	}
+	}*/
 	
     protected void setupInputs()
     {
@@ -452,8 +472,8 @@ public class MyGame extends VariableFrameRateGame {
     	
 		Action quitGameAction = new QuitGameAction(this);
 		Action incrementCounter = new IncrementCounterAction(this);
-		Action CameraLookLeftRightA = new CameraLookLeftRightAction(camera);
-		Action cameraLookUpDownA = new CameraLookUpDownAction(camera);
+		//Action CameraLookLeftRightA = new CameraLookLeftRightAction(camera);
+		//Action cameraLookUpDownA = new CameraLookUpDownAction(camera);
 		Action p1MoveForwardA = new MoveForwardAction(avatar1, protClient, this);
 		Action p1MoveBackwardA = new MoveBackwardAction(avatar1, protClient, this);
 		Action p1MoveLeftA = new MoveLeftAction(avatar1, protClient, this);
@@ -559,14 +579,112 @@ public class MyGame extends VariableFrameRateGame {
     	cameraN1 = rootNode.createChildSceneNode("MaincameraN1");
     	cameraN1.attachObject(camera);
     	camera.getFrustum().setFarClipDistance(1000.0f);
-		camera.setMode('n');
+		camera.setMode('c');
+		
+		initMouseMode(rs, rw);
     }
+	
+	private void initMouseMode(RenderSystem r, RenderWindow w)
+	{ 
+		RenderWindow rw = w;
+		RenderSystem rs = r;
+		Viewport v = rw.getViewport(0);
+		left = rw.getLocationLeft();
+		top = rw.getLocationTop();
+		widt = v.getActualScissorWidth();
+		hei = v.getActualScissorHeight();
+		centerX = left + widt/2;
+		centerY = top + hei/2;
+		isRecentering = false;
+		try // note that some platforms may not support the Robot class
+		{
+			robot = new Robot();
+		}
+		catch (AWTException ex)
+		{
+			throw new RuntimeException("Couldn't create Robot!");
+		}
+		recenterMouse();
+		prevMouseX = centerX; // 'prevMouse' defines the initial
+		prevMouseY = centerY; // mouse position
+		// also change the cursor
+	}
+	
+	public void mouseMoved(MouseEvent e)
+	{	
+		// if robot is recentering and the MouseEvent location is in the center,
+		// then this event was generated by the robot
+		if (isRecentering && centerX == e.getXOnScreen() && centerY == e.getYOnScreen())
+		{
+			isRecentering = false;
+		} // mouse recentered, recentering complete
+		else
+		{ // event was due to a user mouse-move, and must be processed
+		curMouseX = e.getXOnScreen();
+		curMouseY = e.getYOnScreen();
+		float mouseDeltaX = prevMouseX - curMouseX;
+		float mouseDeltaY = prevMouseY - curMouseY;
+		yaw(mouseDeltaX);
+		pitch(mouseDeltaY);
+		prevMouseX = curMouseX;
+		prevMouseY = curMouseY;
+		// tell robot to put the cursor to the center (since user just moved it)
+		recenterMouse();
+		prevMouseX = centerX; //reset prev to center
+		prevMouseY = centerY;
+		} 
+	}
+	
+	private void recenterMouse()
+	{
+		
+		// use the robot to move the mouse to the center point.
+		// Note that this generates one MouseEvent.
+		isRecentering = true;
+		robot.mouseMove((int)centerX, (int)centerY);
+	}
+	
+	public void pitch(float mouseDeltaY)
+	{
+		float tilt;
+		Vector3 f = camera.getFd();
+		Vector3 r = camera.getRt();
+		Vector3 u = camera.getUp();
+		if (mouseDeltaY < 0.0)
+			tilt = -1.0f;
+		else if (mouseDeltaY > 0.0)
+			tilt = 1.0f;
+		else
+			tilt = 0.0f;
+		Vector3 fn = (f.rotate(Degreef.createFrom(0.1f * tilt), r)).normalize();
+		Vector3 un = (u.rotate(Degreef.createFrom(0.1f * tilt), r)).normalize();
+		camera.setFd((Vector3f)Vector3f.createFrom(fn.x(),fn.y(),fn.z()));
+		camera.setUp((Vector3f)Vector3f.createFrom(un.x(),un.y(),un.z()));
+	}
+	
+	public void yaw(float mouseDeltaX)
+	{
+		float yaw;
+		Vector3 f = camera.getFd();
+		Vector3 r = camera.getRt();
+		Vector3 u = camera.getUp();
+		if (mouseDeltaX < 0.0)
+			yaw = -1.0f;
+		else if (mouseDeltaX > 0.0)
+			yaw = 1.0f;
+		else
+			yaw = 0.0f;
+		Vector3 fn = (f.rotate(Degreef.createFrom(0.1f * yaw), u)).normalize();
+		Vector3 rn = (r.rotate(Degreef.createFrom(0.1f * yaw), u)).normalize();
+		camera.setFd((Vector3f)Vector3f.createFrom(fn.x(),fn.y(),fn.z()));
+		camera.setRt((Vector3f)Vector3f.createFrom(rn.x(),rn.y(),rn.z()));
+	}
 	
     protected void setupOrbitCamera(Engine eng, SceneManager sm)
     {
     	String gpName = im.getFirstGamepadName();
 		String kbName = im.getKeyboardName();
-		orbitController1 = new Camera3Pcontroller(camera, cameraN1, avatar1, kbName, im);
+		//orbitController1 = new Camera3Pcontroller(camera, cameraN1, avatar1, kbName, im);
     }
 	
 	public void incrementCounter()
@@ -583,7 +701,7 @@ public class MyGame extends VariableFrameRateGame {
     protected void update(Engine engine) {
 		im.update(elapsTime);
 		processNetworking(elapsTime);
-		orbitController1.updateCameraPosition();
+		//orbitController1.updateCameraPosition();
 		//orbitController2.updateCameraPosition();
 		rs = (GL4RenderSystem) engine.getRenderSystem();
 		elapsTime += engine.getElapsedTimeMillis();
@@ -600,7 +718,7 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// Physics
 		float time = engine.getElapsedTimeMillis();
-		if (running)
+		/*if (running)
 		{
 			Matrix4 mat;
 			physicsEng.update(time);
@@ -612,7 +730,7 @@ public class MyGame extends VariableFrameRateGame {
 					s.setLocalPosition(mat.value(0,3), mat.value(1,3), mat.value(2,3));
 				}
 			}
-		}
+		}*/
 		// End of physics
 	} // End of update()
 	
