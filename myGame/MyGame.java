@@ -67,7 +67,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	
 	// Physics variables
-	private SceneNode ball1Node, ball2Node, gndNode;
+	private SceneNode ball1Node, ball2Node, groundNode;
 	private PhysicsEngine physicsEng;
 	private PhysicsObject ball1PhysObj, ball2PhysObj, gndPlaneP;
 	private boolean running = false;
@@ -76,8 +76,8 @@ public class MyGame extends VariableFrameRateGame {
 	// End of Physics variables
 	
 	// Script files
-	File rotationD2RC = new File("scripts/InitParams.js");
-	File helloWorldS = new File("scripts/hello.js");
+	File rotationD2RC = new File("InitParams.js");
+	File helloWorldS = new File("hello.js");
 	// End of script files
 
 	// Variables associated with scripts
@@ -243,7 +243,7 @@ public class MyGame extends VariableFrameRateGame {
 			avatar.setNode(ghostN);
 		}
 	}
-	
+	/*
 	// NPC function
 	public void addGhostNPCtoGameWorld(GhostNPC ghostAvatar, Vector3 pos)
 	throws IOException
@@ -260,7 +260,7 @@ public class MyGame extends VariableFrameRateGame {
 			avatar.setNode(ghostN);
 		}
 	}
-	
+	*/
 	public void removeGhostAvatarFromGameWorld(GhostAvatar avatar)
 	{
 		//if(avatar != null) gameObjectsToRemove.add(avatar.getID());
@@ -285,18 +285,18 @@ public class MyGame extends VariableFrameRateGame {
 		// Physics test objects
 		// Ball 1
 		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
-		ball1Node = rootNode.createChildSceneNode("Ball1Node");
+		ball1Node = sm.getRootSceneNode().createChildSceneNode("Ball1Node");
 		ball1Node.attachObject(ball1Entity);
 		ball1Node.setLocalPosition(0, 2, -2);
 		// Ball 2
-		Entity ball2Entity = sm.createEntity("Ball2", meshFilename);
-		ball2Node = rootNode.createChildSceneNode("Ball2Node");
+		Entity ball2Entity = sm.createEntity("Ball2", "sphere.obj");
+		ball2Node = sm.getRootSceneNode().createChildSceneNode("Ball2Node");
 		ball2Node.attachObject(ball2Entity);
 		ball2Node.setLocalPosition(-1,10,-2);
 		// Ground plane
 		Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
-		groundNode = rootNode.createChildSceneNode(GROUND_N);
-		groundNode.attachObject(groundEntity
+		groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
+		groundNode.attachObject(groundEntity);
 		// End of physics test objects
 		
 		/*
@@ -320,7 +320,7 @@ public class MyGame extends VariableFrameRateGame {
 		// Initialize the rotation controller with the variable spinSpeed
 		testRC = new RotationController(Vector3f.createUnitVectorY(),
 				((Double)(jsEngine.get("spinSpeed"))).floatValue());
-    	
+    	/*
     	// set up sky box
     	Configuration conf = eng.getConfiguration();
     	TextureManager tm = getEngine().getTextureManager();
@@ -353,7 +353,7 @@ public class MyGame extends VariableFrameRateGame {
     	sb.setTexture(top, SkyBox.Face.TOP);
     	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
     	sm.setActiveSkyBox(sb);
-    	
+    	*/
     	
     	
 		sceneManager = sm;
@@ -426,22 +426,22 @@ public class MyGame extends VariableFrameRateGame {
 		float up[] = {0,1,0};
 		double[] temptf;
 		temptf = toDoubleArray(ball1Node.getLocalTransform().toFloatArray());
-		ball1PhysObj = physicsEng.addSphereObject(physicsEngine.nextUID(),
+		ball1PhysObj = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 2.0f);
 		ball1PhysObj.setBounciness(1.0f);
 		ball1Node.setPhysicsObject(ball1PhysObj);
 		temptf = toDoubleArray(ball2Node.getLocalTransform().toFloatArray());
-		ball2PhysObj = physicsEng.addSphereObject(physicsEngine.nextUID(),
+		ball2PhysObj = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 2.0f);
-		ball2PhysicsObj.setBounciness(1.0f);
-		ball2Node.setPhysicsObject(ball2PhysicsObj);
-		temptf = toDoubleArray(gndNode.getLocalTransform().toFloatArray());
+		ball2PhysObj.setBounciness(1.0f);
+		ball2Node.setPhysicsObject(ball2PhysObj);
+		temptf = toDoubleArray(groundNode.getLocalTransform().toFloatArray());
 		gndPlaneP = physicsEng.addStaticPlaneObject(physicsEng.nextUID(),
 			temptf, up, 0.0f);
 		gndPlaneP.setBounciness(1.0f);
-		gndNode.scale(3f, .05f, 3f);
-		gndNode.setLocalPosition(0, -7, -2);
-		gndNode.setPhysicsObject(gndPlaneP);
+		groundNode.scale(3f, .05f, 3f);
+		groundNode.setLocalPosition(0, -7, -2);
+		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
 	}
 	
@@ -603,7 +603,7 @@ public class MyGame extends VariableFrameRateGame {
 		if (running)
 		{
 			Matrix4 mat;
-			physicsEngine.update(time);
+			physicsEng.update(time);
 			for (SceneNode s : engine.getSceneManager().getSceneNodes())
 			{
 				if (s.getPhysicsObject() != null)

@@ -2,11 +2,10 @@ package myGameEngine;
 
 import ray.rage.scene.*;
 import ray.rml.*;
-import java.util.UUID;
 
 public class GhostNPC
 {
-	private UUID id;
+	private int id;
 	private SceneNode node;
 	private Entity entity;
 	
@@ -17,11 +16,11 @@ public class GhostNPC
 	
 	public void setPosition(Vector3 position)
 	{
-		node.setLocatlPosition(position);
+		node.setLocalPosition(position);
 	}
 	
-	public void getPosition(Vector3 position)
+	public Vector3 getPosition(Vector3 position)
 	{
-		return node.getLocatlPosition();
+		return node.getLocalPosition();
 	}
 }

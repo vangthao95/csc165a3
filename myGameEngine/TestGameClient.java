@@ -27,7 +27,7 @@ public class TestGameClient extends GameConnectionClient
 	{
 		GhostNPC newNPC = new GhostNPC(id, position);
 		ghostNPCs.add(newNPC);
-		game.addGhostNPCtoGameWorld(newNPC);
+		//game.addGhostNPCtoGameWorld(newNPC);
 	}
 	
 	private void updateGhostNPC(int id, Vector3 position)
@@ -61,7 +61,7 @@ public class TestGameClient extends GameConnectionClient
 	}
 	
 	public void askForNPCinfo()
-	{	
+	{	/*
 		try
 		{
 			sendPacket(new String("needNPC," + id.toString()));
@@ -69,6 +69,6 @@ public class TestGameClient extends GameConnectionClient
 		catch (IOException e)
 		{
 			e.printStackTrace();
-		}
+		}*/
 	}
 }

@@ -32,8 +32,8 @@ public class NetworkingServer
 		}
 	}
 	
-	public TestNetworkingServer(int id) // constructor
-	{
+	public void TestNetworkingServer(int id) // constructor
+	{/*
 		startTime = System.nanoTime();
 		lastUpdateTime = startTime;
 		npcCtrl = new NPCcontroller();
@@ -42,11 +42,11 @@ public class NetworkingServer
 		
 		// start NPC control loop
 		npcCtrl.setupNPCs();
-		npcLoop();
+		npcLoop();*/
 	}
 	
 	public void npcLoop() // NPC control loop
-	{
+	{/*
 		while (true)
 		{
 			long frameStartTime = System.nanoTime();
@@ -58,7 +58,7 @@ public class NetworkingServer
 				tcpServer.sendNPCinfo();
 			}
 			Thread.yield();
-		}
+		}*/
 	}
  
 	public static void main(String[] args)

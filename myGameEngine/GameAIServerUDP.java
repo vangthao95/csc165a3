@@ -6,9 +6,9 @@ import java.util.UUID;
 import ray.networking.server.GameConnectionServer;
 import ray.networking.server.IClientInfo;
 
-public class GameAIServerTCP extends GameConnectionServer<UUID>
+public class GameAIServerUDP extends GameConnectionServer<UUID>
 {
-	public GameAIServerTCP(int localPort) throws IOException
+	public GameAIServerUDP(int localPort) throws IOException
 	{
 		super(localPort, ProtocolType.UDP);
 	}
@@ -21,11 +21,11 @@ public class GameAIServerTCP extends GameConnectionServer<UUID>
 		if(msgTokens.length > 0)
 		{
 			// also additional cases for receiving messages about NPCs, such as:
-			if(messageTokens[0].compareTo("needNPC") == 0)
+			if(msgTokens[0].compareTo("needNPC") == 0)
 			{
 				//. . .
 			}
-			else if(messageTokens[0].compareTo("collide") == 0)
+			else if(msgTokens[0].compareTo("collide") == 0)
 			{
 			//. . .
 			}
@@ -34,7 +34,7 @@ public class GameAIServerTCP extends GameConnectionServer<UUID>
 	// game protocol as before, plus additional NPC protocol cases. i.e.,
 	// messages regarding NPC’s sent to clients, such as:
 	public void sendNPCinfo() // informs clients of new NPC positions
-	{
+	{/*
 		for (int i=0; i<npcCtrl.getNumOfNPCs(); i++)
 		{
 			try
@@ -47,6 +47,6 @@ public class GameAIServerTCP extends GameConnectionServer<UUID>
 				//. . .
 			}
 			
-		}
+		}*/
 	}
 }
