@@ -76,8 +76,8 @@ public class MyGame extends VariableFrameRateGame {
 	// End of Physics variables
 	
 	// Script files
-	File rotationD2RC = new File("InitParams.js");
-	File helloWorldS = new File("hello.js");
+	File rotationD2RC = new File("scripts/InitParams.js");
+	File helloWorldS = new File("scripts/hello.js");
 	// End of script files
 
 	// Variables associated with scripts
@@ -281,7 +281,7 @@ public class MyGame extends VariableFrameRateGame {
 	
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
-	{
+	{/*
 		// Physics test objects
 		// Ball 1
 		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
@@ -298,7 +298,7 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
 		groundNode.attachObject(groundEntity);
 		// End of physics test objects
-		
+		*/
 		/*
     	ScriptEngineManager factory = new ScriptEngineManager();
 		// get a list of the script engines on this platform
@@ -405,11 +405,11 @@ public class MyGame extends VariableFrameRateGame {
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
 		
 		// Physics
-		initPhysicsSystem();
-		createRagePhysicsWorld();
+		//initPhysicsSystem();
+		//createRagePhysicsWorld();
     }
 	
-	// Physics Function
+	/*-/ Physics Function
 	private void initPhysicsSystem()
 	{
 		String engine = "ray.physics.JBullet.JBulletPhysicsEngine";
@@ -443,7 +443,7 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode.setLocalPosition(0, -7, -2);
 		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
-	}
+	}*/
 	
     protected void setupInputs()
     {
@@ -601,7 +601,7 @@ public class MyGame extends VariableFrameRateGame {
 		// Physics
 		float time = engine.getElapsedTimeMillis();
 		if (running)
-		{
+		{/*
 			Matrix4 mat;
 			physicsEng.update(time);
 			for (SceneNode s : engine.getSceneManager().getSceneNodes())
@@ -611,7 +611,7 @@ public class MyGame extends VariableFrameRateGame {
 					mat = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
 					s.setLocalPosition(mat.value(0,3), mat.value(1,3), mat.value(2,3));
 				}
-			}
+			}*/
 		}
 		// End of physics
 	} // End of update()
