@@ -20,8 +20,8 @@ public class MoveRightAction extends AbstractInputAction
 	
 	public void performAction(float time, Event e)
 	{
-		playerNode.moveLeft(0.01f);
-		myGame.updateVerticalPosition();
-		protClient.sendMoveMessage(playerNode.getLocalPosition());		
+		Angle rotAmt = Degreef.createFrom(-0.10f);
+		Vector3 u = playerNode.getLocalUpAxis();
+		playerNode.rotate(rotAmt, u);	
 	}
 }
