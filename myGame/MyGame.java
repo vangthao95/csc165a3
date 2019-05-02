@@ -485,11 +485,18 @@ public class MyGame extends VariableFrameRateGame {
 	private void updateMonster()
 	{
 		Vector3 up = Vector3f.createUnitVectorY();
-		if (MONSTER_STATE == 0)
-			return;
-		else if (MONSTER_STATE == 1)
+		if (MONSTER_STATE == 1)
 		{
 			object1.lookAt(avatar1, up);
+			Vector3 currPos = object1.getLocalPosition();
+			Vector3 playerPos = getPlayerPosition();
+			Vector3 distVector = Vector3f.createFrom(currPos.x() - playerPos.x(), currPos.y() - playerPos.y(), currPos.z() - playerPos.z());
+			float dist = distVector.length()
+			if (dist > 1.0f)
+			{
+				object1.moveForward();
+				updateVerticalPos(object1);
+			}
 		}
 		else if (MONSTER_STATE == 2)
 		{
@@ -638,6 +645,7 @@ public class MyGame extends VariableFrameRateGame {
 		return avatar1.getLocalPosition();
 	}
 	float deleteGrenadeTime = 0.0f;
+	float npcStateChangeTime = 0.0f;
 	@Override
     protected void update(Engine engine) {
 		im.update(elapsTime);
@@ -656,6 +664,15 @@ public class MyGame extends VariableFrameRateGame {
 			testRC.setSpeed(((Double)(jsEngine.get("spinSpeed"))).floatValue());
 			System.out.println("Dolphin 2 rotation speed updated");
 		}
+		
+		// NPC logic and update
+		npcStateChangeTime += engine.getElapsedTimeMillis();
+		if (npcStateChangeTime > 5000) // Change npc state every 5 seconds
+		{
+			Random r = new Random();
+			MONSTER_STATE =  r.nextInt(3) + 1;
+		{
+		updateMonster();
 		
 		// Physics
 		float time = engine.getElapsedTimeMillis();
@@ -684,7 +701,7 @@ public class MyGame extends VariableFrameRateGame {
 				}
 			}
 		}
-		updateMonster();
+
 		
 		// update the animation
 		SkeletalEntity manSE =
