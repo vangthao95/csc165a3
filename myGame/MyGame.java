@@ -18,6 +18,8 @@ import ray.rage.scene.Camera.Frustum.*;
 import ray.rage.scene.controllers.*;
 import ray.rml.*;
 import ray.rage.rendersystem.gl4.GL4RenderSystem;
+import ray.rage.scene.SkeletalEntity.EndType;
+import static ray.rage.scene.SkeletalEntity.EndType.*;
 // -----------------------------------------------
 
 // ----------------From InputActions--------------
@@ -281,7 +283,7 @@ public class MyGame extends VariableFrameRateGame {
 	
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
-	{/*
+	{
 		// Physics test objects
 		// Ball 1
 		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
@@ -298,8 +300,8 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
 		groundNode.attachObject(groundEntity);
 		// End of physics test objects
-		*/
-		/*
+		
+		
     	ScriptEngineManager factory = new ScriptEngineManager();
 		// get a list of the script engines on this platform
 		List<ScriptEngineFactory> list = factory.getEngineFactories();
@@ -309,7 +311,7 @@ public class MyGame extends VariableFrameRateGame {
 			System.out.println(" Name = " + f.getEngineName()
 			+ " language = " + f.getLanguageName()
 			+ " extensions = " + f.getExtensions());
-		}*/
+		}
 		
 		// run hello world script
 		executeScript(helloWorldS);
@@ -320,7 +322,7 @@ public class MyGame extends VariableFrameRateGame {
 		// Initialize the rotation controller with the variable spinSpeed
 		testRC = new RotationController(Vector3f.createUnitVectorY(),
 				((Double)(jsEngine.get("spinSpeed"))).floatValue());
-    	/*
+    	
     	// set up sky box
     	Configuration conf = eng.getConfiguration();
     	TextureManager tm = getEngine().getTextureManager();
@@ -334,7 +336,7 @@ public class MyGame extends VariableFrameRateGame {
     	 tm.setBaseDirectoryPath(conf.valueOf("assets.textures.path"));
     	 
     	// cubemap textures are flipped upside-down.
-    	// All textures must have the same dimensions, so any image’s
+    	// All textures must have the same dimensions, so any imageï¿½s
     	// heights will work since they are all the same height
     	AffineTransform xform = new AffineTransform();
     	xform.translate(0, front.getImage().getHeight());
@@ -353,21 +355,44 @@ public class MyGame extends VariableFrameRateGame {
     	sb.setTexture(top, SkyBox.Face.TOP);
     	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
     	sm.setActiveSkyBox(sb);
-    	*/
+    	
+		
+		//animations
+		SkeletalEntity manSE =
+		sm.createSkeletalEntity("manAv", "robot.rkm", "robot.rks");
+		Texture tex = sm.getTextureManager().getAssetByPath("robot.png");
+		TextureState tstate = (TextureState) sm.getRenderSystem()
+		.createRenderState(RenderState.Type.TEXTURE);
+		tstate.setTexture(tex);
+		manSE.setRenderState(tstate);
+		// attach the entity to a scene node
+		manSE.setRenderState(tstate);
+		avatar1= sm.getRootSceneNode().createChildSceneNode(manSE.getName()+"Node");
+		avatar1.attachObject(manSE);
+		avatar1.moveBackward(2.0f);
+		//avatar1.translate(0.0f,2.0f,0.0f);
+		avatar1.scale(0.1f,0.1f,0.1f);
+		
+		
+		// load animations
+		manSE.loadAnimation("throwAnimation", "throwing.rka");
+		//manSE.loadAnimation("waveAnimation", "wave.rka");
+
+		
     	
     	
 		sceneManager = sm;
 		
-		Entity avatar1E = sm.createEntity("avatar1", "avatar_v1.obj");
+		/*Entity avatar1E = sm.createEntity("avatar1", "avatar_v1.obj");
         avatar1E.setPrimitive(Primitive.TRIANGLES);
-        
+        */
 		Entity object1E = sm.createEntity("object1", "monster1_textured.obj");
         object1E.setPrimitive(Primitive.TRIANGLES);
-
+/*
         avatar1 = sm.getRootSceneNode().createChildSceneNode(avatar1E.getName() + "Node");
 		avatar1.scale(0.05f, 0.05f, 0.05f);
         avatar1.attachObject(avatar1E);
-        
+  */      
         object1 = sm.getRootSceneNode().createChildSceneNode(object1E.getName() + "Node");
         object1.moveForward(1.0f);
         object1.attachObject(object1E);
@@ -410,11 +435,11 @@ public class MyGame extends VariableFrameRateGame {
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
 		
 		// Physics
-		//initPhysicsSystem();
-		//createRagePhysicsWorld();
+		initPhysicsSystem();
+		createRagePhysicsWorld();
     }
 	
-	/*-/ Physics Function
+	// Physics Function
 	private void initPhysicsSystem()
 	{
 		String engine = "ray.physics.JBullet.JBulletPhysicsEngine";
@@ -448,7 +473,7 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode.setLocalPosition(0, -7, -2);
 		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
-	}*/
+	}
 	private int MONSTER_STATE = 1;
 	// 0 do nothing
 	// 1 walk towards player
@@ -631,7 +656,7 @@ public class MyGame extends VariableFrameRateGame {
 		// Physics
 		float time = engine.getElapsedTimeMillis();
 		if (running)
-		{/*
+		{
 			Matrix4 mat;
 			physicsEng.update(time);
 			for (SceneNode s : engine.getSceneManager().getSceneNodes())
@@ -641,11 +666,26 @@ public class MyGame extends VariableFrameRateGame {
 					mat = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
 					s.setLocalPosition(mat.value(0,3), mat.value(1,3), mat.value(2,3));
 				}
-			}*/
+			}
 		}
 		updateMonster();
+		
+		// update the animation
+		SkeletalEntity manSE =
+		(SkeletalEntity) sceneManager.getEntity("manAv");
+		//SceneNode avatarN = sm.getSceneNode("manAvNode");
+		manSE.update();
+		
+		
 		// End of physics
 	} // End of update()
+	public void throwGernade()
+	{ SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
+	
+	manSE.stopAnimation();
+	manSE.playAnimation("throwAnimation", 0.5f, LOOP, 0);
+	}
+	
 	
 	public void updateVerticalPosition()
 	{
