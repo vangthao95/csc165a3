@@ -288,12 +288,12 @@ public class MyGame extends VariableFrameRateGame {
 		// Ball 1
 		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
 		ball1Node = sm.getRootSceneNode().createChildSceneNode("Ball1Node");
-		ball1Node.attachObject(ball1Entity);
+		//ball1Node.attachObject(ball1Entity);
 		ball1Node.setLocalPosition(0, 2, -2);
 		// Ball 2
 		Entity ball2Entity = sm.createEntity("Ball2", "sphere.obj");
 		ball2Node = sm.getRootSceneNode().createChildSceneNode("Ball2Node");
-		ball2Node.attachObject(ball2Entity);
+		//ball2Node.attachObject(ball2Entity);
 		ball2Node.setLocalPosition(-1,10,-2);
 		// Ground plane
 		Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
@@ -679,11 +679,33 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// End of physics
 	} // End of update()
-	public void throwGernade()
-	{ SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
-	
-	manSE.stopAnimation();
-	manSE.playAnimation("throwAnimation", 0.5f, LOOP, 0);
+	public void throwGrenade() throws IOException
+	{
+		SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
+		manSE.stopAnimation();
+		manSE.playAnimation("throwAnimation", 2.0f, STOP, 0);
+		
+		SceneNode rootNode = sceneManager.getRootSceneNode();
+		Entity grenadeE = sceneManager.createEntity("grenade1E", "sphere.obj");
+		SceneNode grenadeN = rootNode.createChildSceneNode("grenade1N");
+		grenadeN.attachObject(grenadeE);
+		grenadeN.scale(0.1f, 0.1f, 0.1f);
+		Vector3 loc = avatar1.getLocalPosition();
+		grenadeN.setLocalPosition(loc.x(), loc.y()+0.3f, loc.z());
+		float mass = 1.0f;
+		float up[] = {0,1,0};
+		double[] temptf;
+		temptf = toDoubleArray(grenadeN.getLocalTransform().toFloatArray());
+		PhysicsObject grenadePhysics = physicsEng.addSphereObject(physicsEng.nextUID(),
+			mass, temptf, 0.3f);
+		grenadePhysics.setBounciness(0.5f);
+		grenadeN.setPhysicsObject(grenadePhysics);
+		
+		Vector3 frontVector = avatar1.getLocalForwardAxis();
+		Vector3 currVector = grenadeN.getLocalPosition();
+		
+		grenadePhysics.applyForce(frontVector.x() * 5.0f, frontVector.y(), frontVector.z() * 5.0f, currVector.x(), currVector.y(), currVector.z());
+		System.out.println("Grenade: " + grenadePhysics.getFriction());
 	}
 	
 	
@@ -747,6 +769,19 @@ public class MyGame extends VariableFrameRateGame {
 				{
 					System.out.println("Stopping Physics!");
 					running = false;
+				}
+				break;
+				case KeyEvent.VK_G:
+				if (running)
+				{
+					try
+					{
+						throwGrenade();
+					}
+					catch (IOException exception)
+					{
+						exception.printStackTrace();
+					}
 				}
 				break;
 		}
