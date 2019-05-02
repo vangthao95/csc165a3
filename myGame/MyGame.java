@@ -96,7 +96,7 @@ public class MyGame extends VariableFrameRateGame {
 	private float elapsTime = 0.0f;
 	private int counter, score = 0;
 	private Camera camera;
-	private SceneNode avatar1, object1;
+	private SceneNode avatar1, object1, object2;
 	private SceneNode cameraN1;
 	// skybox
 	private static final String SKYBOX_NAME = "MySkyBox";
@@ -358,26 +358,29 @@ public class MyGame extends VariableFrameRateGame {
     	
 		sceneManager = sm;
 		
-		Entity avatar1E1 = sm.createEntity("avatar1", "avatar_v1.obj");
-        avatar1E1.setPrimitive(Primitive.TRIANGLES);
+		Entity avatar1E = sm.createEntity("avatar1", "avatar_v1.obj");
+        avatar1E.setPrimitive(Primitive.TRIANGLES);
         
-		Entity object1E1 = sm.createEntity("object1", "monster1_textured.obj");
-        avatar1E1.setPrimitive(Primitive.TRIANGLES);
+		Entity object1E = sm.createEntity("object1", "monster1_textured.obj");
+        object1E.setPrimitive(Primitive.TRIANGLES);
 
-        avatar1 = sm.getRootSceneNode().createChildSceneNode(avatar1E1.getName() + "Node");
-        avatar1.moveBackward(.5f);
+        avatar1 = sm.getRootSceneNode().createChildSceneNode(avatar1E.getName() + "Node");
 		avatar1.scale(0.05f, 0.05f, 0.05f);
-        avatar1.attachObject(avatar1E1);
-		avatar1.moveUp(.25f);
+        avatar1.attachObject(avatar1E);
         
-        object1 = sm.getRootSceneNode().createChildSceneNode(object1E1.getName() + "Node");
+        object1 = sm.getRootSceneNode().createChildSceneNode(object1E.getName() + "Node");
         object1.moveForward(1.0f);
-        object1.attachObject(object1E1);
+        object1.attachObject(object1E);
 		object1.scale(0.05f, 0.05f, 0.05f);
 		object1.moveUp(.25f);
 		// Add dolphin 2 to rotation controller
-		testRC.addNode(object1);
-		sm.addController(testRC);
+		
+		
+		Entity object2E = sm.createEntity("object2", "dolphinHighPoly.obj");
+		object2 = sm.getRootSceneNode().createChildSceneNode(object2E.getName() + "Node");
+        object2E.setPrimitive(Primitive.TRIANGLES);
+		//object2.attachObject(object2E);
+		object2.moveUp(.5f);
 
         //sm.getAmbientLight().setIntensity(new Color(.5f, .5f, .5f));
 		Light sunLight = sm.createLight("sunLight", Light.Type.POINT);
@@ -446,6 +449,31 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
 	}*/
+	private int MONSTER_STATE = 1;
+	// 0 do nothing
+	// 1 walk towards player
+	// 2 turn in a random direction and walk that way
+	private void updateMonster()
+	{
+		Vector3 up = Vector3f.createUnitVectorY();
+		if (MONSTER_STATE == 0)
+			return;
+		else if (MONSTER_STATE == 1)
+		{
+			object1.lookAt(avatar1, up);
+		}
+		else if (MONSTER_STATE == 2)
+		{
+			Random r = new Random();
+			float degreesToTurn = r.nextInt(360);
+			Angle rotAmt = rotAmt = Degreef.createFrom(degreesToTurn);
+			object1.rotate(rotAmt, up);
+		}
+		else if (MONSTER_STATE == 3)
+		{
+			object1.moveForward(0.01f);
+		}
+	}
 	
     protected void setupInputs()
     {
@@ -615,6 +643,7 @@ public class MyGame extends VariableFrameRateGame {
 				}
 			}*/
 		}
+		updateMonster();
 		// End of physics
 	} // End of update()
 	
@@ -641,6 +670,27 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// use avatar Local coordinates to set position, including height
 		avatar1.setLocalPosition(newAvatarPosition);
+	}
+	
+	public void updateVerticalPos(SceneNode obj)
+	{
+		Vector3 worldAvatarPosition = obj.getWorldPosition();
+		Vector3 localAvatarPosition = obj.getLocalPosition();
+		
+		// use avatar World coordinates to get coordinates for height
+		Vector3 newAvatarPosition = Vector3f.createFrom(
+			// Keep the X coordinate
+			localAvatarPosition.x(),
+			// The Y coordinate is the varying height
+			tessE.getWorldHeight(
+			worldAvatarPosition.x(),
+			worldAvatarPosition.z()),
+			//Keep the Z coordinate
+			localAvatarPosition.z()
+		);
+		
+		// use avatar Local coordinates to set position, including height
+		obj.setLocalPosition(newAvatarPosition);
 	}
 	
 	public void keyPressed(KeyEvent e)
