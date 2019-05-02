@@ -485,9 +485,10 @@ public class MyGame extends VariableFrameRateGame {
 		// can also set damping, friction, etc.
 	}
 	private int MONSTER_STATE = 1;
-	// 0 do nothing
 	// 1 walk towards player
-	// 2 turn in a random direction and walk that way
+	// 2 turn in a random direction
+	// 3 walk in the direction it is currently facing
+	// 4 look at player
 	private void updateMonster()
 	{
 		Vector3 up = Vector3f.createUnitVectorY();
@@ -507,13 +508,17 @@ public class MyGame extends VariableFrameRateGame {
 		else if (MONSTER_STATE == 2)
 		{
 			Random r = new Random();
-			float degreesToTurn = r.nextInt(360);
+			float degreesToTurn = r.nextInt(11) - 5;
 			Angle rotAmt = rotAmt = Degreef.createFrom(degreesToTurn);
 			object1.rotate(rotAmt, up);
 		}
 		else if (MONSTER_STATE == 3)
 		{
 			object1.moveForward(0.01f);
+		}
+		else if (MONSTER_STATE == 4)
+		{
+			object1.lookAt(avatar1, up);
 		}
 	}
 	
@@ -676,7 +681,19 @@ public class MyGame extends VariableFrameRateGame {
 		if (npcStateChangeTime > 5000) // Change npc state every 5 seconds
 		{
 			Random r = new Random();
-			MONSTER_STATE =  r.nextInt(3) + 1;
+			int chanceOfMonsterState =  r.nextInt(100) + 1;
+			// 10% monster walk towards player
+			// 30% monster turn in a random direction
+			// 15% monster look in the direction it is facing
+			// 45% monster look at player and doesnt move
+			if (chanceOfMonsterState >= 1 || chanceOfMonsterState <= 10) // 1-10
+				MONSTER_STATE = 1;
+			else if (chanceOfMonsterState >= 11 || chanceOfMonsterState <= 40) // 11-40
+				MONSTER_STATE = 2;
+			else if (chanceOfMonsterState >= 41 || chanceOfMonsterState <= 55) // 41-55
+				MONSTER_STATE = 3;
+			else if (chanceOfMonsterState >= 56 || chanceOfMonsterState <= 100) // 56-100
+				MONSTER_STATE = 4;
 		{
 		updateMonster();
 		
@@ -686,7 +703,7 @@ public class MyGame extends VariableFrameRateGame {
 		if (grenadeExist)
 		{
 			deleteGrenadeTime += engine.getElapsedTimeMillis();
-			System.out.println(deleteGrenadeTime);
+			//System.out.println(deleteGrenadeTime);
 			if (deleteGrenadeTime > 5000)
 			{
 				deleteGrenadeTime = 0.0f;
