@@ -71,7 +71,7 @@ public class MyGame extends VariableFrameRateGame {
 	// Physics variables
 	private SceneNode ball1Node, ball2Node, groundNode;
 	Entity grenadeE;
-	SceneNode grenade;
+	SceneNode grenadeN;
 	PhysicsObject grenadePhysics;
 	private PhysicsEngine physicsEng;
 	private PhysicsObject ball1PhysObj, ball2PhysObj, gndPlaneP;
@@ -498,10 +498,10 @@ public class MyGame extends VariableFrameRateGame {
 			Vector3 currPos = object1.getLocalPosition();
 			Vector3 playerPos = getPlayerPosition();
 			Vector3 distVector = Vector3f.createFrom(currPos.x() - playerPos.x(), currPos.y() - playerPos.y(), currPos.z() - playerPos.z());
-			float dist = distVector.length()
+			float dist = distVector.length();
 			if (dist > 1.0f)
 			{
-				object1.moveForward();
+				object1.moveForward(0.01f);
 				updateVerticalPos(object1);
 			}
 		}
@@ -694,7 +694,7 @@ public class MyGame extends VariableFrameRateGame {
 				MONSTER_STATE = 3;
 			else if (chanceOfMonsterState >= 56 || chanceOfMonsterState <= 100) // 56-100
 				MONSTER_STATE = 4;
-		{
+		}
 		updateMonster();
 		
 		// Physics
