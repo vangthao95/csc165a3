@@ -401,7 +401,6 @@ public class MyGame extends VariableFrameRateGame {
         object1.moveForward(1.0f);
         object1.attachObject(object1E);
 		object1.scale(0.05f, 0.05f, 0.05f);
-		object1.moveUp(.25f);
 		// Add dolphin 2 to rotation controller
 		
 		
@@ -441,6 +440,13 @@ public class MyGame extends VariableFrameRateGame {
 		// Physics
 		initPhysicsSystem();
 		createRagePhysicsWorld();
+		
+		// Initial vertical update of player so
+		// player doesn't have to move to get above ground
+		updateVerticalPosition();
+		
+		// Initial vertical update of monster
+		updateVerticalPos(object1);
     }
 	
 	// Physics Function
