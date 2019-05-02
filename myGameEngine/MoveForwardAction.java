@@ -22,6 +22,7 @@ public class MoveForwardAction extends AbstractInputAction
 	{
 		playerNode.moveForward(0.01f);
 		//System.out.println(playerNode.getLocalPosition().x());
+		myGame.throwGernade();
 		myGame.updateVerticalPosition();
 		protClient.sendMoveMessage(playerNode.getLocalPosition());
 	}
