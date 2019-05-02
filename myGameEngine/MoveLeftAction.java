@@ -20,7 +20,7 @@ public class MoveLeftAction extends AbstractInputAction
 	
 	public void performAction(float time, Event e)
 	{
-		Angle rotAmt = Degreef.createFrom(0.10f);
+		Angle rotAmt = Degreef.createFrom(0.30f);
 		Vector3 u = playerNode.getLocalUpAxis();
 		playerNode.rotate(rotAmt, u);
 	}
