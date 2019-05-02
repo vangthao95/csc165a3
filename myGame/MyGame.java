@@ -70,11 +70,15 @@ public class MyGame extends VariableFrameRateGame {
 	
 	// Physics variables
 	private SceneNode ball1Node, ball2Node, groundNode;
+	Entity grenadeE;
+	SceneNode grenade;
+	PhysicsObject grenadePhysics;
 	private PhysicsEngine physicsEng;
 	private PhysicsObject ball1PhysObj, ball2PhysObj, gndPlaneP;
 	private boolean running = false;
 	private final static String GROUND_E = "Ground";
 	private final static String GROUND_N = "GroundNode";
+	private boolean grenadeExist = false;
 	// End of Physics variables
 	
 	// Script files
@@ -633,7 +637,7 @@ public class MyGame extends VariableFrameRateGame {
 	{
 		return avatar1.getLocalPosition();
 	}
-	
+	float deleteGrenadeTime = 0.0f;
 	@Override
     protected void update(Engine engine) {
 		im.update(elapsTime);
@@ -655,6 +659,18 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// Physics
 		float time = engine.getElapsedTimeMillis();
+		
+		if (grenadeExist)
+		{
+			deleteGrenadeTime += engine.getElapsedTimeMillis();
+			System.out.println(deleteGrenadeTime);
+			if (deleteGrenadeTime > 5000)
+			{
+				deleteGrenadeTime = 0.0f;
+				deleteGrenade();
+			}
+		}
+
 		if (running)
 		{
 			Matrix4 mat;
@@ -686,8 +702,8 @@ public class MyGame extends VariableFrameRateGame {
 		manSE.playAnimation("throwAnimation", 2.0f, STOP, 0);
 		
 		SceneNode rootNode = sceneManager.getRootSceneNode();
-		Entity grenadeE = sceneManager.createEntity("grenade1E", "sphere.obj");
-		SceneNode grenadeN = rootNode.createChildSceneNode("grenade1N");
+		grenadeE = sceneManager.createEntity("grenade1E", "sphere.obj");
+		grenadeN = rootNode.createChildSceneNode("grenade1N");
 		grenadeN.attachObject(grenadeE);
 		grenadeN.scale(0.1f, 0.1f, 0.1f);
 		Vector3 loc = avatar1.getLocalPosition();
@@ -696,7 +712,7 @@ public class MyGame extends VariableFrameRateGame {
 		float up[] = {0,1,0};
 		double[] temptf;
 		temptf = toDoubleArray(grenadeN.getLocalTransform().toFloatArray());
-		PhysicsObject grenadePhysics = physicsEng.addSphereObject(physicsEng.nextUID(),
+		grenadePhysics = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 0.3f);
 		grenadePhysics.setBounciness(0.5f);
 		grenadeN.setPhysicsObject(grenadePhysics);
@@ -706,8 +722,15 @@ public class MyGame extends VariableFrameRateGame {
 		
 		grenadePhysics.applyForce(frontVector.x() * 5.0f, frontVector.y(), frontVector.z() * 5.0f, currVector.x(), currVector.y(), currVector.z());
 		System.out.println("Grenade: " + grenadePhysics.getFriction());
+		grenadeExist = true;
 	}
 	
+	public void deleteGrenade()
+	{
+		sceneManager.destroyEntity("grenade1E");
+		sceneManager.destroySceneNode("grenade1N");
+		grenadeExist = false;
+	}
 	
 	public void updateVerticalPosition()
 	{
@@ -772,7 +795,7 @@ public class MyGame extends VariableFrameRateGame {
 				}
 				break;
 				case KeyEvent.VK_G:
-				if (running)
+				if ((running) && (grenadeExist == false))
 				{
 					try
 					{
