@@ -370,7 +370,6 @@ public class MyGame extends VariableFrameRateGame {
 		tstate.setTexture(tex);
 		manSE.setRenderState(tstate);
 		// attach the entity to a scene node
-		manSE.setRenderState(tstate);
 		avatar1= sm.getRootSceneNode().createChildSceneNode(manSE.getName()+"Node");
 		avatar1.attachObject(manSE);
 		avatar1.moveBackward(2.0f);
@@ -465,7 +464,7 @@ public class MyGame extends VariableFrameRateGame {
 		float mass = 1.0f;
 		float up[] = {0,1,0};
 		double[] temptf;
-		temptf = toDoubleArray(ball1Node.getLocalTransform().toFloatArray());
+		/*temptf = toDoubleArray(ball1Node.getLocalTransform().toFloatArray());
 		ball1PhysObj = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 2.0f);
 		ball1PhysObj.setBounciness(1.0f);
@@ -474,7 +473,7 @@ public class MyGame extends VariableFrameRateGame {
 		ball2PhysObj = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 2.0f);
 		ball2PhysObj.setBounciness(1.0f);
-		ball2Node.setPhysicsObject(ball2PhysObj);
+		ball2Node.setPhysicsObject(ball2PhysObj);*/
 		temptf = toDoubleArray(groundNode.getLocalTransform().toFloatArray());
 		gndPlaneP = physicsEng.addStaticPlaneObject(physicsEng.nextUID(),
 			temptf, up, 0.0f);
@@ -704,7 +703,7 @@ public class MyGame extends VariableFrameRateGame {
 		{
 			deleteGrenadeTime += engine.getElapsedTimeMillis();
 			//System.out.println(deleteGrenadeTime);
-			if (deleteGrenadeTime > 5000)
+			if (deleteGrenadeTime > 2000)
 			{
 				deleteGrenadeTime = 0.0f;
 				deleteGrenade();
@@ -735,6 +734,40 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// End of physics
 	} // End of update()
+	
+	int counterBullets = 0;
+	public void shoot() throws IOException
+	{
+		SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
+		manSE.stopAnimation();
+		manSE.playAnimation("throwAnimation", 5.0f, STOP, 0);
+		
+		SceneNode rootNode = sceneManager.getRootSceneNode();
+		Entity bulletE = sceneManager.createEntity("grenade1E" + counterBullets, "sphere.obj");
+		SceneNode bulletN = rootNode.createChildSceneNode("grenade1N" + counterBullets);
+		bulletN.attachObject(bulletE);
+		bulletN.scale(0.1f, 0.1f, 0.1f);
+		Vector3 loc = avatar1.getLocalPosition();
+		bulletN.setLocalPosition(loc.x(), loc.y()+0.3f, loc.z());
+		float mass = 1.0f;
+		float up[] = {0,1,0};
+		double[] temptf;
+		temptf = toDoubleArray(bulletN.getLocalTransform().toFloatArray());
+		PhysicsObject bulletPhysics = physicsEng.addSphereObject(physicsEng.nextUID(),
+			mass, temptf, 0.3f);
+		bulletPhysics.setBounciness(0.5f);
+		bulletN.setPhysicsObject(bulletPhysics);
+		
+		Vector3f frontV = (Vector3f)avatar1.getLocalForwardAxis();
+		Vector3 frontVector = frontV.normalize();
+		Vector3 currVector = bulletN.getLocalPosition();
+		
+		//System.out.println("X: " + frontVector.x() + "Y: " + frontVector.y() + "Z: " + frontVector.z());
+		bulletPhysics.applyForce(frontVector.x() * 500.0f, 0.0f, frontVector.z() * 500.0f, currVector.x(), 0.0f, currVector.z());
+		//System.out.println("Grenade: " + bulletPhysics.getFriction());
+		counterBullets++;
+	}
+	
 	public void throwGrenade() throws IOException
 	{
 		SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
@@ -757,11 +790,13 @@ public class MyGame extends VariableFrameRateGame {
 		grenadePhysics.setBounciness(0.5f);
 		grenadeN.setPhysicsObject(grenadePhysics);
 		
-		Vector3 frontVector = avatar1.getLocalForwardAxis();
+		Vector3f frontV = (Vector3f)avatar1.getLocalForwardAxis();
+		Vector3 frontVector = frontV.normalize();
 		Vector3 currVector = grenadeN.getLocalPosition();
 		
-		grenadePhysics.applyForce(frontVector.x() * 5.0f, frontVector.y(), frontVector.z() * 5.0f, currVector.x(), currVector.y(), currVector.z());
-		System.out.println("Grenade: " + grenadePhysics.getFriction());
+		//System.out.println("X: " + frontVector.x() + "Y: " + frontVector.y() + "Z: " + frontVector.z());
+		grenadePhysics.applyForce(frontVector.x() * 150.0f, 50.0f, frontVector.z() * 150.0f, currVector.x(), 0.0f, currVector.z());
+		//System.out.println("Grenade: " + grenadePhysics.getFriction());
 		grenadeExist = true;
 	}
 	
@@ -788,7 +823,7 @@ public class MyGame extends VariableFrameRateGame {
 			// The Y coordinate is the varying height
 			tessE.getWorldHeight(
 			worldAvatarPosition.x(),
-			worldAvatarPosition.z()),
+			worldAvatarPosition.z()) +.1f,
 			//Keep the Z coordinate
 			localAvatarPosition.z()
 		);
@@ -847,6 +882,18 @@ public class MyGame extends VariableFrameRateGame {
 					}
 				}
 				break;
+				case KeyEvent.VK_F:
+				if (running)
+				{
+					try
+					{
+						shoot();
+					}
+					catch (IOException exception)
+					{
+						exception.printStackTrace();
+					}
+				}
 		}
 		super.keyPressed(e);
 	}
