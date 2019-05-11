@@ -39,6 +39,11 @@ public class GhostAvatar
 		node = newNode;
 	}
 
+	public void rotate(float rotation, Vector3 axisOfRotation)
+	{
+		Angle rotAmt = Degreef.createFrom(rotation);
+		node.rotate(rotAmt, axisOfRotation);
+	}
 	// accessors and setters for id, node, entity, and position
 
 }

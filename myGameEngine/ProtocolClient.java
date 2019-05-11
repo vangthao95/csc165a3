@@ -29,7 +29,7 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		String strMessage = (String)msg;
 		String[] messageTokens = strMessage.split(",");
-		
+		System.out.println(strMessage);
 		// Message processing
 		// 0th Index contains type of message
 		if(messageTokens.length > 0)
@@ -72,7 +72,18 @@ public class ProtocolClient extends GameConnectionClient
 					Float.parseFloat(messageTokens[4]));
 					
 				//System.out.println("Received new move message for user " + ghostID.toString());
-				updateGhostAvatars(ghostID, ghostPosition);
+				updateMoveGhostAvatars(ghostID, ghostPosition);
+			}
+			else if (messageTokens[0].compareTo("rotate") == 0)
+			{ // format: rotate,remoteId,rot,x,y,z
+				UUID ghostID = UUID.fromString(messageTokens[1]);
+				float rot = Float.parseFloat(messageTokens[2]);
+				Vector3 axisOfRotation = Vector3f.createFrom(
+					Float.parseFloat(messageTokens[3]),
+					Float.parseFloat(messageTokens[4]),
+					Float.parseFloat(messageTokens[5]));
+					
+				updateRotateGhostAvatars(ghostID, rot, axisOfRotation);
 			}
 			else if (messageTokens[0].compareTo("wantRequest") == 0)
 			{ // format: wantRequest,requestorId
@@ -131,7 +142,20 @@ public class ProtocolClient extends GameConnectionClient
 		try
 		{
 			String message = new String("move," + id.toString());
-			message += "," + pos.x()+"," + pos.y() + "," + pos.z();
+			message += "," + pos.x()+ "," + pos.y() + "," + pos.z();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	public void sendRotateMessage(float rot, Vector3 axis)
+	{ // format: (rotate,localId,rot,x,y,z)
+		try
+		{
+			String message = new String("rotate," + id.toString());
+			message += "," + rot + "," + axis.x() + "," + axis.y() + "," + axis.z();
 			sendPacket(message);
 		}
 		catch (IOException e)
@@ -174,7 +198,7 @@ public class ProtocolClient extends GameConnectionClient
 		
 	}
 
-	public void updateGhostAvatars(UUID ghostID, Vector3 pos)
+	public void updateMoveGhostAvatars(UUID ghostID, Vector3 pos)
 	{
 		try
 		{
@@ -191,7 +215,27 @@ public class ProtocolClient extends GameConnectionClient
 		}
 		catch (Exception e)
 		{
-			System.out.println("Error updating ghost avatars");
+			System.out.println("Error updating ghost avatar's position");
+		}
+	}
+	
+	public void updateRotateGhostAvatars(UUID ghostID, float rot, Vector3 axisOfRotation)
+	{
+		try 
+		{
+			for (int i = 0; i < ghostAvatars.size(); i++)
+			{
+				GhostAvatar currElem = ghostAvatars.elementAt(i);
+				if (currElem.getID().toString().compareTo(ghostID.toString()) == 0)
+				{
+					currElem.rotate(rot, axisOfRotation);
+					return;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println("Error updating ghost avatar's rotation");
 		}
 	}
 }

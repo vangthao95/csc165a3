@@ -23,4 +23,6 @@ public class GhostNPC
 	{
 		return node.getLocalPosition();
 	}
+	
+
 }

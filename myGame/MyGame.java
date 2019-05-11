@@ -437,8 +437,8 @@ public class MyGame extends VariableFrameRateGame {
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
 		
 		// Physics
-		initPhysicsSystem();
-		createRagePhysicsWorld();
+		//initPhysicsSystem();
+		//createRagePhysicsWorld();
 		
 		// Initial vertical update of player so
 		// player doesn't have to move to get above ground
@@ -447,7 +447,7 @@ public class MyGame extends VariableFrameRateGame {
 		// Initial vertical update of monster
 		updateVerticalPos(object1);
     }
-	
+	/*
 	// Physics Function
 	private void initPhysicsSystem()
 	{
@@ -473,7 +473,7 @@ public class MyGame extends VariableFrameRateGame {
 		ball2PhysObj = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 2.0f);
 		ball2PhysObj.setBounciness(1.0f);
-		ball2Node.setPhysicsObject(ball2PhysObj);*/
+		ball2Node.setPhysicsObject(ball2PhysObj);
 		temptf = toDoubleArray(groundNode.getLocalTransform().toFloatArray());
 		gndPlaneP = physicsEng.addStaticPlaneObject(physicsEng.nextUID(),
 			temptf, up, 0.0f);
@@ -482,7 +482,7 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode.setLocalPosition(0, -7, -2);
 		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
-	}
+	}*/
 	private int MONSTER_STATE = 1;
 	// 1 walk towards player
 	// 2 turn in a random direction
@@ -711,7 +711,7 @@ public class MyGame extends VariableFrameRateGame {
 		}
 
 		if (running)
-		{
+		{/*
 			Matrix4 mat;
 			physicsEng.update(time);
 			for (SceneNode s : engine.getSceneManager().getSceneNodes())
@@ -721,7 +721,7 @@ public class MyGame extends VariableFrameRateGame {
 					mat = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
 					s.setLocalPosition(mat.value(0,3), mat.value(1,3), mat.value(2,3));
 				}
-			}
+			}*/
 		}
 
 		
@@ -852,7 +852,7 @@ public class MyGame extends VariableFrameRateGame {
 		// use avatar Local coordinates to set position, including height
 		obj.setLocalPosition(newAvatarPosition);
 	}
-	
+	/*
 	public void keyPressed(KeyEvent e)
 	{
 		switch (e.getKeyCode())
@@ -896,7 +896,7 @@ public class MyGame extends VariableFrameRateGame {
 				}
 		}
 		super.keyPressed(e);
-	}
+	}*/
 	
 	private float[] toFloatArray(double[] arr)
 	{

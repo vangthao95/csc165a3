@@ -23,5 +23,6 @@ public class MoveRightAction extends AbstractInputAction
 		Angle rotAmt = Degreef.createFrom(-0.70f);
 		Vector3 u = playerNode.getLocalUpAxis();
 		playerNode.rotate(rotAmt, u);	
+		protClient.sendRotateMessage(rotAmt.valueDegrees(), u);
 	}
 }

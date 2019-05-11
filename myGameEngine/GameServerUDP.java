@@ -17,6 +17,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	public void processPacket(Object o, InetAddress senderIP, int sndPort)
 	{
 		String message = (String) o;
+		System.out.println(message);
 		String[] msgTokens = message.split(",");
 		if(msgTokens.length > 0)
 		{
@@ -63,6 +64,15 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				System.out.println(clientID.toString() + " moved to x: " + pos[0] + " y: " + pos[1] + " z: " + pos[2]);
 				sendMoveMessages(clientID, pos);
+			}
+			// format: rotate,localId,rot,x,y,z
+			else if (msgTokens[0].compareTo("rotate") == 0)
+			{
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				String rot = msgTokens[2];
+				String[] axis = {msgTokens[3], msgTokens[4], msgTokens[5]};
+				System.out.println(clientID.toString() + " rotated " + rot + " degrees with respects to the axis (" + axis[0] + "," + axis[1] + "," + axis[2] + ")");
+				sendRotateMessages(clientID, rot, axis);
 			}
 			// format: wantReply,localId,requestorId,x,y,z
 			else if (msgTokens[0].compareTo("wantReply") == 0)
@@ -165,6 +175,24 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		catch (IOException e)
 		{
 			System.out.println("Error creating send move messages");
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendRotateMessages(UUID clientID, String rot, String[] axis)
+	{ // format: rotate,localId,rot,x,y,z
+		try
+		{
+			String message = new String("rotate," + clientID.toString());
+			message += "," + rot;
+			message += "," + axis[0];
+			message += "," + axis[1];
+			message += "," + axis[2];
+			forwardPacketToAll(message, clientID);
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error creating send rotate messages");
 			e.printStackTrace();
 		}
 	}
