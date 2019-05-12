@@ -124,7 +124,6 @@ public class MyGame extends VariableFrameRateGame {
 	private ProtocolType serverProtocol;
 	private ProtocolClient protClient;
 	private boolean isClientConnected;
-	private Vector<UUID> gameObjectsToRemove;
 	// Networking end
 	
 	private SceneManager sceneManager;
@@ -194,7 +193,6 @@ public class MyGame extends VariableFrameRateGame {
 	
 	private void setupNetworking()
 	{
-		gameObjectsToRemove = new Vector<UUID>();
 		isClientConnected = false;
 		try
 		{

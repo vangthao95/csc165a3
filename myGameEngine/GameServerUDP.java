@@ -180,9 +180,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			e.printStackTrace();
 		}
 	}
-	public void sndDetailsMsg(UUID clientID, UUID remoteId, String[] position)
-	{ // etc…..
-	}
 	
 	// Request details from all clients besides the current clientID
 	// requestorId here is localId
