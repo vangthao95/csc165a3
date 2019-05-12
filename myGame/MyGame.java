@@ -412,7 +412,7 @@ public class MyGame extends VariableFrameRateGame {
   */      
         object1 = sm.getRootSceneNode().createChildSceneNode(object1E.getName() + "Node");
         object1.moveForward(1.0f);
-        //object1.attachObject(object1E);
+        object1.attachObject(object1E);
 		object1.scale(0.05f, 0.05f, 0.05f);
 		// Add dolphin 2 to rotation controller
 		
