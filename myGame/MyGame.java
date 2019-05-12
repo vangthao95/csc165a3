@@ -240,13 +240,29 @@ public class MyGame extends VariableFrameRateGame {
 		if (avatar != null)
 		{
 			uniqueGhosts++;
-			Entity ghostE = sceneManager.createEntity("ghost" + uniqueGhosts, "avatar_v1.obj");
+			Entity ghostE = sceneManager.createEntity("ghostE" + avatar.getID(), "avatar_v1.obj");
 			ghostE.setPrimitive(Primitive.TRIANGLES);
-			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode(avatar.getID().toString());
+			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("ghostN" + avatar.getID().toString());
 			ghostN.attachObject(ghostE);
 			ghostN.setLocalPosition(pos);
 			ghostN.scale(0.05f, 0.05f, 0.05f);
 			avatar.setNode(ghostN);
+		}
+	}
+	
+	public void removeGhostAvatar(GhostAvatar avatar)
+	{
+		if (avatar != null)
+		{
+			// Get the node
+			SceneNode ghostN = avatar.getNode();
+			
+			// Detaches objects
+			sceneManager.getRootSceneNode().detachChild(ghostN);
+			sceneManager.destroySceneNode(ghostN);
+			sceneManager.destroyEntity("ghostE" + avatar.getID());
+			System.out.println("Here");
+			
 		}
 	}
 	/*

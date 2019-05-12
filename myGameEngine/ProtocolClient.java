@@ -50,8 +50,9 @@ public class ProtocolClient extends GameConnectionClient
 			}
 			else if(messageTokens[0].compareTo("bye") == 0) // receive bye
 			{ // format: bye,remoteId
+				System.out.println("Client here 1");
 				UUID ghostID = UUID.fromString(messageTokens[1]);
-				//removeGhostAvatar(ghostID);
+				removeGhostAvatar(ghostID);
 			}
 			else if (messageTokens[0].compareTo("create")==0)
 			{ // format: create,remoteId,x,y,z
@@ -89,6 +90,11 @@ public class ProtocolClient extends GameConnectionClient
 			{ // format: wantRequest,requestorId
 				System.out.println("Detail requested from server");
 				sendWantRequestReply(messageTokens[1]);
+			}
+			else if (messageTokens[0].compareTo("statusCheck") == 0)
+			{ // format: statusCheck
+				System.out.println("Status check received from server... sending reply...");
+				sendStatusReply();
 			}
 		}
 	}
@@ -130,12 +136,6 @@ public class ProtocolClient extends GameConnectionClient
 		{
 			e.printStackTrace();
 		}
-	}
-	public void sendByeMessage()
-	{ // etc….. 
-	}
-	public void sendDetailsForMessage(UUID remId, Vector3f pos)
-	{ // etc….. 
 	}
 	public void sendMoveMessage(Vector3 pos)
 	{ // format: (move,localId,x,y,z)
@@ -205,7 +205,7 @@ public class ProtocolClient extends GameConnectionClient
 			for (int i = 0; i < ghostAvatars.size(); i++)
 			{
 				GhostAvatar currElem = ghostAvatars.elementAt(i);
-				System.out.println(ghostID.toString() + " checking " + currElem.getID().toString());
+				//System.out.println(ghostID.toString() + " checking " + currElem.getID().toString());
 				if (currElem.getID().toString().compareTo(ghostID.toString()) == 0)
 				{
 					currElem.setPos(pos);
@@ -216,6 +216,7 @@ public class ProtocolClient extends GameConnectionClient
 		catch (Exception e)
 		{
 			System.out.println("Error updating ghost avatar's position");
+			e.printStackTrace();
 		}
 	}
 	
@@ -236,6 +237,45 @@ public class ProtocolClient extends GameConnectionClient
 		catch (Exception e)
 		{
 			System.out.println("Error updating ghost avatar's rotation");
+			e.printStackTrace();
 		}
+	}
+	
+	public void sendStatusReply()
+	{ // format: (statusReply,localId)
+		try
+		{
+			String message = new String("statusReply," + id.toString());
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void removeGhostAvatar(UUID ghostID)
+	{
+		GhostAvatar avatar = null;
+		try 
+		{
+			for (int i = 0; i < ghostAvatars.size(); i++)
+			{
+				GhostAvatar currElem = ghostAvatars.elementAt(i);
+				if (currElem.getID().toString().compareTo(ghostID.toString()) == 0)
+				{
+					avatar = currElem;
+					break;
+				}
+			}
+			game.removeGhostAvatar(avatar);
+			ghostAvatars.remove(avatar);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		
 	}
 }

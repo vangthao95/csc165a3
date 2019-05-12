@@ -1,18 +1,59 @@
 package myGameEngine;
 
 import java.io.IOException;
+import java.lang.InterruptedException;
 import java.net.InetAddress;
 import java.util.UUID;
 import ray.networking.server.GameConnectionServer;
 import ray.networking.server.IClientInfo;
+import java.util.Timer; // Timer
+import java.util.TimerTask; // Periodically scheduling a task
+import java.util.Date; // Get date
+import java.lang.Thread; // For sleep
+import java.util.concurrent.ConcurrentHashMap; // getClients() returns this data structure
+import java.util.Vector;
 
 public class GameServerUDP extends GameConnectionServer<UUID>
 {
+	// Interval to check status of clients in seconds
+	private long CHECK_CLIENTS = 30;
+	private Vector<UUID> clientsReplies;
+	
 	public GameServerUDP(int localPort) throws IOException
 	{
 		super(localPort, ProtocolType.UDP);
+		clientsReplies = new Vector<UUID>();
+		checkForClients();
+
 	}
  
+	// Periodically check for connected clients
+	private void checkForClients()
+	{
+		TimerTask checkForClientsTask = new TimerTask()
+		{
+			public void run()
+			{
+				try 
+				{
+					System.out.println("Send status check message on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
+					sendStatusCheckToAll();
+					Thread.sleep(5000);
+					removeClientsWithNoReply();
+					//System.out.println("Delete clients on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+				
+			}
+		};
+		
+		Timer timer = new Timer("Timer");
+		
+		timer.scheduleAtFixedRate(checkForClientsTask, 1000, CHECK_CLIENTS * 1000);
+	}
 	@Override
 	public void processPacket(Object o, InetAddress senderIP, int sndPort)
 	{
@@ -50,13 +91,13 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			}
 			// case where server receives a BYE message
 			// format: bye,localid
-			else if(msgTokens[0].compareTo("bye") == 0)
+			/*else if(msgTokens[0].compareTo("bye") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				System.out.println("Received bye message from id: " + clientID.toString());
 				sendByeMessages(clientID);
 				removeClient(clientID);
-			}
+			}*/
 			// format: move,localId,x,y,z,
 			else if (msgTokens[0].compareTo("move") == 0)
 			{
@@ -88,6 +129,12 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				sendWantsDetailsMessages(clientID);
+			}
+			// format: statusReply,localId
+			else if (msgTokens[0].compareTo("statusReply") == 0)
+			{
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				clientsReplies.add(clientID);
 			}
 		}
 	}
@@ -196,7 +243,55 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			e.printStackTrace();
 		}
 	}
+	
+	public void sendStatusCheckToAll()
+	{
+		try
+		{
+			if (clientsReplies.isEmpty() == false)			
+			{
+				clientsReplies.clear();
+			}
+			String message = new String("statusCheck");
+			sendPacketToAll(message);
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error creating status check message");
+			e.printStackTrace();
+		}
+	}
 	public void sendByeMessages(UUID clientID)
-	{ // etc…..
+	{
+		try
+		{
+			String message = new String("bye," + clientID.toString());
+			sendPacketToAll(message);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void removeClientsWithNoReply()
+	{
+		try
+		{
+			ConcurrentHashMap<UUID, IClientInfo> clients = getClients(); // Get current clients
+			for (UUID key : clients.keySet())
+			{
+				if (clientsReplies.contains(key) == false)
+				{
+						System.out.println("Client was not found: " + key);
+						removeClient(key);
+						sendByeMessages(key);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 }
