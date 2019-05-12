@@ -12,17 +12,21 @@ import java.util.Date; // Get date
 import java.lang.Thread; // For sleep
 import java.util.concurrent.ConcurrentHashMap; // getClients() returns this data structure
 import java.util.Vector;
+import ray.rml.Vector3f;
+import ray.rml.Vector3;
 
 public class GameServerUDP extends GameConnectionServer<UUID>
 {
 	// Interval to check status of clients in seconds
 	private long CHECK_CLIENTS = 30;
 	private Vector<UUID> clientsReplies;
+	private ConcurrentHashMap<UUID, ServerGhostAvatar> listOfPlayers;
 	
 	public GameServerUDP(int localPort) throws IOException
 	{
 		super(localPort, ProtocolType.UDP);
 		clientsReplies = new Vector<UUID>();
+		listOfPlayers = new ConcurrentHashMap<UUID, ServerGhostAvatar>();
 		checkForClients();
 
 	}
@@ -163,6 +167,11 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[0];
 			message += "," + position[1];
 			message += "," + position[2];
+			
+			// Also add it to the list of players 
+			ServerGhostAvatar newPlayer = new ServerGhostAvatar(clientID, Float.parseFloat(position[0]), Float.parseFloat(position[1]), Float.parseFloat(position[2]));
+			listOfPlayers.putIfAbsent(clientID, newPlayer);
+			
 			forwardPacketToAll(message, clientID);
 		}
 		catch(IOException e)
@@ -201,6 +210,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[0];
 			message += "," + position[1];
 			message += "," + position[2];
+			updateGhostAvatar(requestee, position);
 			sendPacket(message, requestor);
 		}
 		catch(IOException e)
@@ -217,6 +227,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[0];
 			message += "," + position[1];
 			message += "," + position[2];
+			updateGhostAvatar(clientID, position);
 			forwardPacketToAll(message, clientID);
 		}
 		catch (IOException e)
@@ -279,6 +290,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		try
 		{
 			ConcurrentHashMap<UUID, IClientInfo> clients = getClients(); // Get current clients
+			// Remove clients from server
 			for (UUID key : clients.keySet())
 			{
 				if (clientsReplies.contains(key) == false)
@@ -286,6 +298,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 						System.out.println("Client was not found: " + key);
 						removeClient(key);
 						sendByeMessages(key);
+						listOfPlayers.remove(key);
 				}
 			}
 		}
@@ -293,5 +306,22 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void updateGhostAvatar(UUID ghostAvaID, String position[])
+	{
+		ServerGhostAvatar curPlayerGhost = listOfPlayers.get(ghostAvaID);
+		if (curPlayerGhost == null)
+		{
+			return;
+		}
+		
+		float x = Float.parseFloat(position[0]);
+		float y = Float.parseFloat(position[1]);
+		float z = Float.parseFloat(position[2]);
+		
+		Vector3 newPos = Vector3f.createFrom(x,y,z);
+		curPlayerGhost.setPos(newPos);
+		
 	}
 }
