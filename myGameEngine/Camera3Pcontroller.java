@@ -16,6 +16,10 @@ public class Camera3Pcontroller
 	private float radias; //distance between camera and target
 	private Vector3 targetPos; //target’s position in the world
 	private Vector3 worldUpVec;
+	private float cameraLeftRightSpeed;
+	private float cameraUpDownSpeed;
+	private OrbitAroundKeyboardAction orbitKeyboardA;
+	private OrbitElevationKeyboardAction elevationKeyboardA;
 	
 	public Camera3Pcontroller(Camera cam, SceneNode camN, SceneNode targ, String controllerName, InputManager im)
 	{
@@ -26,8 +30,11 @@ public class Camera3Pcontroller
 		cameraElevation = 20.0f; // elevation is in degrees
 		radias = 2.0f;
 		worldUpVec = Vector3f.createFrom(0.0f, 1.0f, 0.0f);
+		cameraUpDownSpeed = 0.5f;
+		cameraLeftRightSpeed = 0.5f;
 		setupInput(im, controllerName);
 		updateCameraPosition();
+
 	}
 	
 	// Updates camera position: computes azimuth, elevation, and distance
@@ -50,8 +57,8 @@ public class Camera3Pcontroller
 			return;
 		Action orbitControllerA = new OrbitAroundControllerAction();
 		Action elevationControllerA = new OrbitElevationControllerAction();
-		Action orbitKeyboardA = new OrbitAroundKeyboardAction();
-		Action elevationKeyboardA = new OrbitElevationKeyboardAction();
+		orbitKeyboardA = new OrbitAroundKeyboardAction(cameraLeftRightSpeed);
+		elevationKeyboardA = new OrbitElevationKeyboardAction(cameraUpDownSpeed);
 		Action orbitRadiasMouseA = new OrbitRadiasMouseAction();
 		
 		String keyboardName = im.getKeyboardName();
@@ -168,19 +175,25 @@ public class Camera3Pcontroller
 	
 	private class OrbitAroundKeyboardAction extends AbstractInputAction
 	{ // Moves the camera around the target (changes camera azimuth).
+		private float lookSpeed;
+		
+		public OrbitAroundKeyboardAction(float speed)
+		{
+				lookSpeed = speed;
+		}
 		public void performAction(float time, net.java.games.input.Event evt)
 		{
 			String key = (evt.getComponent()).getName();
 			float rotAmount;
 			if (key == "Left")
 			{
-				rotAmount=-0.5f;
+				rotAmount = lookSpeed * -1.0f;
 			}
 			else
 			{
 				if (key == "Right")
 				{
-					rotAmount=0.5f;
+					rotAmount = lookSpeed;
 				}
 				else
 				{
@@ -192,23 +205,34 @@ public class Camera3Pcontroller
 			//System.out.println(cameraAzimuth);
 			updateCameraPosition();
 		}
+		
+		public void updateSpeed(float speed)
+		{
+			lookSpeed = speed;
+		}
 	}
 	
 	private class OrbitElevationKeyboardAction extends AbstractInputAction
 	{ // Moves the camera around the target (changes camera elevation).
+		private float lookSpeed;
+		
+		public OrbitElevationKeyboardAction(float speed)
+		{
+			lookSpeed = speed;
+		}
 		public void performAction(float time, net.java.games.input.Event evt)
 		{
 			String key = (evt.getComponent()).getName();
 			float rotAmount;
 			if (key == "Down")
 			{
-				rotAmount=-0.5f;
+				rotAmount = lookSpeed * -1.0f;
 			}
 			else
 			{
 				if (key == "Up")
 				{
-					rotAmount=0.5f;
+					rotAmount = lookSpeed;
 				}
 				else
 				{
@@ -224,6 +248,11 @@ public class Camera3Pcontroller
 			
 			//System.out.println(cameraElevation);
 			updateCameraPosition();
+		}
+		
+		public void updateSpeed(float speed)
+		{
+				lookSpeed = speed;
 		}
 	}
 	
@@ -256,5 +285,16 @@ public class Camera3Pcontroller
 			updateCameraPosition();
 		}
 	}
- // similar for OrbitRadiasAction, OrbitElevationAction
+	
+	public void setLookLeftRightSpeed(float speed)
+	{
+		cameraLeftRightSpeed = speed;
+		orbitKeyboardA.updateSpeed(cameraLeftRightSpeed);
+	}
+	
+	public void setLookUpDownSpeed(float speed)
+	{
+		cameraUpDownSpeed = speed;
+		elevationKeyboardA.updateSpeed(cameraUpDownSpeed);
+	}
 }

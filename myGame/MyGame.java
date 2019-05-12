@@ -82,16 +82,22 @@ public class MyGame extends VariableFrameRateGame {
 	// End of Physics variables
 	
 	// Script files
-	File rotationD2RC = new File("scripts/InitParams.js");
+	File initParameters = new File("scripts/InitParams.js");
 	File helloWorldS = new File("scripts/hello.js");
+	File cameraSpeedS = new File("scripts/cameraSpeeds.js");
 	// End of script files
 
 	// Variables associated with scripts
 	ScriptEngineManager factory = new ScriptEngineManager();
 	ScriptEngine jsEngine = factory.getEngineByName("js"); // Game engine
 	RotationController testRC; // InitParam.js
-	Long rotationD2RCLastModifiedTime; // Modified time for rotationD2RC script
-	
+	Long initParametersLastModifiedTime; // Modified time for initParameters script
+	Long cameraSpeedLastModifiedtime;
+	private float oldX = 0.0f;
+	private float oldY = 0.0f;
+	private float oldZ = 0.0f;
+	private float oldUpdown = 0.5f;
+	private float oldLeftright = 0.5f;
 	// End of variables associated with scripts
 
 	// to minimize variable allocation in update()
@@ -138,6 +144,9 @@ public class MyGame extends VariableFrameRateGame {
 		
 		System.out.println("press w, a, s, d to move the avatar");
 		System.out.println("press the up, down, left, and right arrow to move the camera");
+		
+		cameraSpeedLastModifiedtime = cameraSpeedS.lastModified();
+		initParametersLastModifiedTime = initParameters.lastModified();
 		
 	}
 
@@ -283,23 +292,8 @@ public class MyGame extends VariableFrameRateGame {
 		}
 	}
 	*/
-	public void removeGhostAvatarFromGameWorld(GhostAvatar avatar)
-	{
-		//if(avatar != null) gameObjectsToRemove.add(avatar.getID());
-	}
+
 	
-	/*private class SendCloseConnectionPacketAction extends AbstractInputAction
-	{
-		// for leaving the game... need to attach to an input device
-		@Override
-		public void performAction(float time, Event e)
-		{
-			if(protClient != null && isClientConnected == true)
-			{
-				protClient.sendByeMessage();
-			}
-		}
-	}*/
 	
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
@@ -335,13 +329,6 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// run hello world script
 		executeScript(helloWorldS);
-		
-		// Run the InitParams.js script to initialize spinSpeed
-		executeScript(rotationD2RC);
-		rotationD2RCLastModifiedTime = rotationD2RC.lastModified();
-		// Initialize the rotation controller with the variable spinSpeed
-		testRC = new RotationController(Vector3f.createUnitVectorY(),
-				((Double)(jsEngine.get("spinSpeed"))).floatValue());
     	
     	// set up sky box
     	Configuration conf = eng.getConfiguration();
@@ -681,15 +668,9 @@ public class MyGame extends VariableFrameRateGame {
 		rs = (GL4RenderSystem) engine.getRenderSystem();
 		elapsTime += engine.getElapsedTimeMillis();
 		
-		// run script again in update() to demonstrate dynamic modification
-		long modTime = rotationD2RC.lastModified();
-		if (modTime > rotationD2RCLastModifiedTime)
-		{
-			rotationD2RCLastModifiedTime = modTime;
-			executeScript(rotationD2RC);
-			testRC.setSpeed(((Double)(jsEngine.get("spinSpeed"))).floatValue());
-			System.out.println("Dolphin 2 rotation speed updated");
-		}
+		// Check scripts last modified time and run them if they are changed
+		checkScripts();
+		
 		
 		// NPC logic and update
 		npcStateChangeTime += engine.getElapsedTimeMillis();
@@ -839,7 +820,7 @@ public class MyGame extends VariableFrameRateGame {
 			// The Y coordinate is the varying height
 			tessE.getWorldHeight(
 			worldAvatarPosition.x(),
-			worldAvatarPosition.z()) +.1f,
+			worldAvatarPosition.z()) +.35f,
 			//Keep the Z coordinate
 			localAvatarPosition.z()
 		);
@@ -936,6 +917,58 @@ public class MyGame extends VariableFrameRateGame {
 				ret[i] = (double)arr[i];
 			}
 		return ret;
+	}
+	
+	private void updatePosFromScript()
+	{
+		float newX = ((Double)(jsEngine.get("avatarX"))).floatValue();
+		float newY = ((Double)(jsEngine.get("avatarY"))).floatValue();
+		float newZ = ((Double)(jsEngine.get("avatarZ"))).floatValue();
+		if (newX != oldX || newY != oldY || newZ != oldZ)
+		{
+			Vector3 newPos = Vector3f.createFrom(newX, newY, newZ);
+			avatar1.setLocalPosition(newPos);
+			protClient.sendMoveMessage(avatar1.getLocalPosition());
+			oldX = newX;
+			oldY = newY;
+			oldZ = newZ;
+		}
+	}
+	
+	private void updateCameraSpeedFromScript()
+	{
+		float newUpdown = ((Double)(jsEngine.get("updown"))).floatValue();
+		float newLeftright = ((Double)(jsEngine.get("leftright"))).floatValue();
+		if (newUpdown != oldUpdown)
+		{
+			orbitController1.setLookUpDownSpeed(newUpdown);
+			oldUpdown = newUpdown;
+		}
+		if (newLeftright != oldLeftright)
+		{
+			orbitController1.setLookLeftRightSpeed(newLeftright);
+			oldLeftright = newLeftright;
+		}
+	}
+	
+	private void checkScripts()
+	{
+		long initParamsModTime = initParameters.lastModified();
+		if (initParamsModTime > initParametersLastModifiedTime)
+		{
+			initParametersLastModifiedTime = initParamsModTime;
+			executeScript(initParameters);
+			updatePosFromScript();
+
+		}
+		
+		long initCameraSpeedModTime = cameraSpeedS.lastModified();
+		if (initCameraSpeedModTime > cameraSpeedLastModifiedtime)
+		{
+			cameraSpeedLastModifiedtime = initCameraSpeedModTime;
+			executeScript(cameraSpeedS);
+			updateCameraSpeedFromScript();
+		}
 	}
 }
 
