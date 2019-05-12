@@ -37,9 +37,9 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				try 
 				{
 					System.out.println("Send status check message on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
-					sendStatusCheckToAll();
-					Thread.sleep(5000);
-					removeClientsWithNoReply();
+					sendStatusCheckToAll(); // Send status check message to all clients
+					Thread.sleep(5000); // Wait 5 seconds for replies
+					removeClientsWithNoReply(); // Delete clients that didn't send a reply back
 					//System.out.println("Delete clients on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
 				}
 				catch (InterruptedException e)
@@ -52,7 +52,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		
 		Timer timer = new Timer("Timer");
 		
-		timer.scheduleAtFixedRate(checkForClientsTask, 1000, CHECK_CLIENTS * 1000);
+		timer.scheduleAtFixedRate(checkForClientsTask, 1000, CHECK_CLIENTS * 1000); // Start the checking
 	}
 	@Override
 	public void processPacket(Object o, InetAddress senderIP, int sndPort)

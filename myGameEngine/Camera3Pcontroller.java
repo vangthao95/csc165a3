@@ -174,13 +174,13 @@ public class Camera3Pcontroller
 			float rotAmount;
 			if (key == "Left")
 			{
-				rotAmount=-0.2f;
+				rotAmount=-0.5f;
 			}
 			else
 			{
 				if (key == "Right")
 				{
-					rotAmount=0.2f;
+					rotAmount=0.5f;
 				}
 				else
 				{
@@ -202,13 +202,13 @@ public class Camera3Pcontroller
 			float rotAmount;
 			if (key == "Down")
 			{
-				rotAmount=-0.2f;
+				rotAmount=-0.5f;
 			}
 			else
 			{
 				if (key == "Up")
 				{
-					rotAmount=0.2f;
+					rotAmount=0.5f;
 				}
 				else
 				{
