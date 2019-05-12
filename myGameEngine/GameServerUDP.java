@@ -20,13 +20,12 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	// Interval to check status of clients in seconds
 	private long CHECK_CLIENTS = 30;
 	private Vector<UUID> clientsReplies;
-	private ConcurrentHashMap<UUID, ServerGhostAvatar> listOfPlayers;
+	//private ConcurrentHashMap<UUID, ServerGhostAvatar> listOfPlayers;
 	
 	public GameServerUDP(int localPort) throws IOException
 	{
 		super(localPort, ProtocolType.UDP);
 		clientsReplies = new Vector<UUID>();
-		listOfPlayers = new ConcurrentHashMap<UUID, ServerGhostAvatar>();
 		checkForClients();
 
 	}
@@ -61,11 +60,28 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	@Override
 	public void processPacket(Object o, InetAddress senderIP, int sndPort)
 	{
+		if (o == null)
+			return;
 		String message = (String) o;
 		System.out.println(message);
 		String[] msgTokens = message.split(",");
 		if(msgTokens.length > 0)
-		{
+		{	
+			if (msgTokens[0].compareTo("NPC") == 0)
+			{
+				if (msgTokens[1].compareTo("moveNPC") == 0)
+				{
+					try
+					{
+						System.out.println("Forwarding NPC move message");
+						forwardPacketToAll(message, UUID.fromString(msgTokens[2]));
+					}
+					catch (Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
 			// case where server receives a JOIN message
 			// format: join,localid
 			if(msgTokens[0].compareTo("join") == 0)
@@ -77,7 +93,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 					UUID clientID = UUID.fromString(msgTokens[1]);
 					System.out.println("Received join message from id: " + clientID.toString());
 					addClient(ci, clientID);
-					sendJoinedMessage(clientID, true);
+					sendJoinedMessage(clientID);
 				}
 				catch (IOException e)
 				{
@@ -140,17 +156,20 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				clientsReplies.add(clientID);
 			}
+			else if (msgTokens[0].compareTo("createNPC") == 0)
+			{
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
+				sendCreateNPCMessages(clientID, pos);
+			}
 		}
 	}
-	public void sendJoinedMessage(UUID clientID, boolean success)
+	public void sendJoinedMessage(UUID clientID)
 	{ // format: join,success or join,failure
 		try
 		{
 			String message = new String("join,");
-			if (success)
-				message += "success";
-			else
-				message += "failure";
+			message += "success";
 			sendPacket(message, clientID);
 		}
 		catch (IOException e)
@@ -168,10 +187,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[1];
 			message += "," + position[2];
 			
-			// Also add it to the list of players 
-			ServerGhostAvatar newPlayer = new ServerGhostAvatar(clientID, Float.parseFloat(position[0]), Float.parseFloat(position[1]), Float.parseFloat(position[2]));
-			listOfPlayers.putIfAbsent(clientID, newPlayer);
-			
 			forwardPacketToAll(message, clientID);
 		}
 		catch(IOException e)
@@ -181,6 +196,21 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 	}
 	
+	public void sendCreateNPCMessages(UUID clientID, String[] position)
+	{
+		try
+		{
+			String message = new String("createNPC," + clientID.toString());
+			message += "," + position[0];
+			message += "," + position[1];
+			message += "," + position[2];
+			forwardPacketToAll(message, clientID);
+		}
+		catch  (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 	// Request details from all clients besides the current clientID
 	// requestorId here is localId
 	public void sendWantsDetailsMessages(UUID clientID)
@@ -207,7 +237,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[0];
 			message += "," + position[1];
 			message += "," + position[2];
-			updateGhostAvatar(requestee, position);
 			sendPacket(message, requestor);
 		}
 		catch(IOException e)
@@ -224,7 +253,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			message += "," + position[0];
 			message += "," + position[1];
 			message += "," + position[2];
-			updateGhostAvatar(clientID, position);
 			forwardPacketToAll(message, clientID);
 		}
 		catch (IOException e)
@@ -295,7 +323,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 						System.out.println("Client was not found: " + key);
 						removeClient(key);
 						sendByeMessages(key);
-						listOfPlayers.remove(key);
 				}
 			}
 		}
@@ -305,7 +332,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		}
 	}
 	
-	public void updateGhostAvatar(UUID ghostAvaID, String position[])
+	/*public void updateGhostAvatar(UUID ghostAvaID, String position[])
 	{
 		ServerGhostAvatar curPlayerGhost = listOfPlayers.get(ghostAvaID);
 		if (curPlayerGhost == null)
@@ -320,5 +347,5 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		Vector3 newPos = Vector3f.createFrom(x,y,z);
 		curPlayerGhost.setPos(newPos);
 		
-	}
+	}*/
 }

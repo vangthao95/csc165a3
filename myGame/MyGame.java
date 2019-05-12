@@ -127,7 +127,6 @@ public class MyGame extends VariableFrameRateGame {
 	// Networking end
 	
 	private SceneManager sceneManager;
-	private int uniqueGhosts = 0;
 	
 	// Terrain Variables
 	private SceneNode tessN;
@@ -246,8 +245,7 @@ public class MyGame extends VariableFrameRateGame {
 	{
 		if (avatar != null)
 		{
-			uniqueGhosts++;
-			Entity ghostE = sceneManager.createEntity("ghostE" + avatar.getID(), "avatar_v1.obj");
+			Entity ghostE = sceneManager.createEntity("ghostE" + avatar.getID().toString(), "avatar_v1.obj");
 			ghostE.setPrimitive(Primitive.TRIANGLES);
 			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("ghostN" + avatar.getID().toString());
 			ghostN.attachObject(ghostE);
@@ -267,11 +265,26 @@ public class MyGame extends VariableFrameRateGame {
 			// Detaches objects
 			sceneManager.getRootSceneNode().detachChild(ghostN);
 			sceneManager.destroySceneNode(ghostN);
-			sceneManager.destroyEntity("ghostE" + avatar.getID());
+			sceneManager.destroyEntity("ghostE" + avatar.getID().toString());
 			System.out.println("Here");
 			
 		}
 	}
+	
+	public void addGhostNPCToGameWorld(GhostNPC newNPC, Vector3 pos) throws IOException
+	{
+		if (newNPC != null)
+		{
+			Entity ghostE = sceneManager.createEntity("NpcE" + newNPC.getID().toString(), "monster1_textured.obj");
+			ghostE.setPrimitive(Primitive.TRIANGLES);
+			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("NpcN" + newNPC.getID().toString());
+			ghostN.attachObject(ghostE);
+			ghostN.setLocalPosition(pos);
+			ghostN.scale(0.05f, 0.05f, 0.05f);
+			newNPC.setNode(ghostN);
+		}
+	}
+	
 	/*
 	// NPC function
 	public void addGhostNPCtoGameWorld(GhostNPC ghostAvatar, Vector3 pos)
@@ -308,9 +321,9 @@ public class MyGame extends VariableFrameRateGame {
 		//ball2Node.attachObject(ball2Entity);
 		ball2Node.setLocalPosition(-1,10,-2);
 		// Ground plane
-		Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
-		groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
-		groundNode.attachObject(groundEntity);
+		//Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
+		//groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
+		//groundNode.attachObject(groundEntity);
 		// End of physics test objects
 		
 		
@@ -399,7 +412,7 @@ public class MyGame extends VariableFrameRateGame {
   */      
         object1 = sm.getRootSceneNode().createChildSceneNode(object1E.getName() + "Node");
         object1.moveForward(1.0f);
-        object1.attachObject(object1E);
+        //object1.attachObject(object1E);
 		object1.scale(0.05f, 0.05f, 0.05f);
 		// Add dolphin 2 to rotation controller
 		
@@ -436,7 +449,6 @@ public class MyGame extends VariableFrameRateGame {
 		tessN.scale(20, 40, 20);
 		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
-		
 		// Physics
 		//initPhysicsSystem();
 		//createRagePhysicsWorld();
@@ -827,6 +839,10 @@ public class MyGame extends VariableFrameRateGame {
 		avatar1.setLocalPosition(newAvatarPosition);
 	}
 	
+	public float getVericalPosition(float x, float z)
+	{
+		return tessE.getWorldHeight(x, z);
+	}
 	public void updateVerticalPos(SceneNode obj)
 	{
 		Vector3 worldAvatarPosition = obj.getWorldPosition();
@@ -968,6 +984,7 @@ public class MyGame extends VariableFrameRateGame {
 			updateCameraSpeedFromScript();
 		}
 	}
+
 }
 
 	

@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.io.IOException;
 import java.lang.String;
 import ray.networking.client.GameConnectionClient;
+import java.util.concurrent.ConcurrentHashMap;
 import ray.rml.*;
 import myGame.*;
 
@@ -15,6 +16,7 @@ public class ProtocolClient extends GameConnectionClient
 	private MyGame game; // Used to call functions like create ghost avatar
 	private UUID id; // Unique id for each player
 	private Vector<GhostAvatar> ghostAvatars; // Store ghost avatars of all other players
+	private ConcurrentHashMap<UUID, GhostNPC> ghostNPCs;
 	
 	public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game)
 	throws IOException
@@ -23,10 +25,13 @@ public class ProtocolClient extends GameConnectionClient
 		this.game = game;
 		this.id = UUID.randomUUID();
 		this.ghostAvatars = new Vector<GhostAvatar>();
+		this.ghostNPCs = new ConcurrentHashMap<UUID, GhostNPC>();
 	}
 	@Override
 	protected void processPacket(Object msg)
 	{
+		if (msg == null)
+			return;
 		String strMessage = (String)msg;
 		String[] messageTokens = strMessage.split(",");
 		System.out.println(strMessage);
@@ -34,6 +39,18 @@ public class ProtocolClient extends GameConnectionClient
 		// 0th Index contains type of message
 		if(messageTokens.length > 0)
 		{
+			if (messageTokens[0].compareTo("NPC") == 0)
+			{
+				if (messageTokens[1].compareTo("moveNPC") == 0)
+				{
+					UUID npcID = UUID.fromString(messageTokens[2]);
+					float x = Float.parseFloat(messageTokens[3]);
+					float z = Float.parseFloat(messageTokens[5]);
+					float y = game.getVericalPosition(x, z);
+					Vector3 npcPos = Vector3f.createFrom(x, y, z);
+					updateNpcMoveGhostAvatars(npcID, npcPos);
+				}
+			}
 			if(messageTokens[0].compareTo("join") == 0) // receive join
 			{ // format: join,success or join,failure
 				if(messageTokens[1].compareTo("success") == 0)
@@ -43,14 +60,9 @@ public class ProtocolClient extends GameConnectionClient
 					sendCreateMessage(game.getPlayerPosition());
 					sendDetailsRequest();
 				}
-				if(messageTokens[1].compareTo("failure") == 0)
-				{
-					game.setIsConnected(false);
-				}
 			}
 			else if(messageTokens[0].compareTo("bye") == 0) // receive bye
 			{ // format: bye,remoteId
-				System.out.println("Client here 1");
 				UUID ghostID = UUID.fromString(messageTokens[1]);
 				removeGhostAvatar(ghostID);
 			}
@@ -95,6 +107,15 @@ public class ProtocolClient extends GameConnectionClient
 			{ // format: statusCheck
 				System.out.println("Status check received from server... sending reply...");
 				sendStatusReply();
+			}
+			else if (messageTokens[0].compareTo("createNPC") == 0)
+			{
+				UUID GhostNPCID = UUID.fromString(messageTokens[1]);
+				Vector3 pos = Vector3f.createFrom(
+					Float.parseFloat(messageTokens[2]),
+					Float.parseFloat(messageTokens[3]),
+					Float.parseFloat(messageTokens[4]));
+				createGhostNPC(GhostNPCID, pos);
 			}
 		}
 	}
@@ -180,6 +201,20 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	
+	public void createGhostNPC(UUID GhostNPCID, Vector3 pos)
+	{
+		try
+		{
+			GhostNPC newNPC = new GhostNPC(GhostNPCID);
+			game.addGhostNPCToGameWorld(newNPC, pos);
+			ghostNPCs.put(GhostNPCID, newNPC);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 	public void sendWantRequestReply(String requestorId)
 	{ // format: (wantReply,localId,requestorId,x,y,z)
 		try
@@ -239,6 +274,12 @@ public class ProtocolClient extends GameConnectionClient
 			System.out.println("Error updating ghost avatar's rotation");
 			e.printStackTrace();
 		}
+	}
+	
+	public void updateNpcMoveGhostAvatars(UUID id, Vector3 pos)
+	{
+		GhostNPC curGhost = ghostNPCs.get(id);
+		curGhost.setPos(pos);
 	}
 	
 	public void sendStatusReply()

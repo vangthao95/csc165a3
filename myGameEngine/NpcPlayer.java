@@ -1,20 +1,20 @@
-// This is a ghost avatar for the server to use to keep track of all of the players' positions.
+// Used for client side projection of NPC
 
 package myGameEngine;
 
+import ray.rage.scene.*;
 import ray.rml.*;
 import java.util.UUID;
 
-public class ServerGhostAvatar
+public class NpcPlayer
 {
 	private UUID id;
 	private float x, y, z;
 	
-	public ServerGhostAvatar(UUID id)
+	public NpcPlayer(UUID id) // constructor
 	{
 		this.id = id;
 	}
-	
 	public UUID getID()
 	{
 		return id;
@@ -31,7 +31,4 @@ public class ServerGhostAvatar
 		y = newPos.y();
 		z = newPos.z();
 	}
-	
-	// accessors and setters for id, node, entity, and position
-
 }
