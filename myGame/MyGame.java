@@ -137,7 +137,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	//Sound
 	private IAudioManager audioMgr;
-	private Sound throwingSound;
+	private Sound throwingSound, bgSound, alienSound;
 	
     public MyGame(String serverAddr, int sPort)
 	{
@@ -506,7 +506,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	
 	
-public void setEarParameters(SceneManager sm)
+	public void setEarParameters(SceneManager sm)
 	{ SceneNode avatar1 = sm.getSceneNode("manAvNode");
 	Vector3 avDir = avatar1.getWorldForwardAxis();
 	// note - should get the camera's forward direction
@@ -517,17 +517,35 @@ public void setEarParameters(SceneManager sm)
 	
 	
 	public void initAudio(SceneManager sm)
-	{ AudioResource resource1, resource2;
+	{ AudioResource resource1, resource2, resource3;
 	audioMgr = AudioManagerFactory.createAudioManager(
 	"ray.audio.joal.JOALAudioManager");
 	if (!audioMgr.initialize())
 	{ System.out.println("Audio Manager failed to initialize!");
 	return;
 	}
+	//throwing Sound
+	//http://soundbible.com/1622-Spear-Throw.html
 	resource1 = audioMgr.createAudioResource("throwing.wav",
 	AudioResourceType.AUDIO_SAMPLE);
+	//http://soundbible.com/2213-Alien-Spaceship-UFO.html
+	//background Sound
+	resource2 = audioMgr.createAudioResource("bgSound.wav",
+	AudioResourceType.AUDIO_SAMPLE);
+	
+	//http://soundbible.com/1084-Slime.html
+	//background Sound
+	resource3 = audioMgr.createAudioResource("alienSound.wav",
+	AudioResourceType.AUDIO_SAMPLE);
+	
 	
 	throwingSound = new Sound(resource1,
+	SoundType.SOUND_EFFECT, 100, false);
+	
+	bgSound = new Sound(resource2,
+	SoundType.SOUND_EFFECT, 100, true);
+	
+	alienSound = new Sound(resource3,
 	SoundType.SOUND_EFFECT, 100, true);
 	
 	throwingSound.initialize(audioMgr);
@@ -535,14 +553,27 @@ public void setEarParameters(SceneManager sm)
 	throwingSound.setMinDistance(0.5f);
 	throwingSound.setRollOff(5.0f);
 	
+	bgSound.initialize(audioMgr);
+	bgSound.setMaxDistance(10.0f);
+	bgSound.setMinDistance(0.5f);
+	bgSound.setRollOff(5.0f);
+	
+	alienSound.initialize(audioMgr);
+	alienSound.setMaxDistance(10.0f);
+	alienSound.setMinDistance(0.5f);
+	alienSound.setRollOff(5.0f);
+	
+	SceneNode monsterN = sm.getSceneNode("object1Node");
 	SceneNode musicN = sm.getSceneNode("manAvNode");
 	throwingSound.setLocation(musicN.getWorldPosition());
+	alienSound.setLocation(monsterN.getWorldPosition());
+	bgSound.setLocation(musicN.getWorldPosition());
 	setEarParameters(sm);
-	throwingSound.play();
+	
+	alienSound.play();
+	bgSound.play();
+	
 	}
-	
-	
-	
 	
 	
 	
@@ -728,6 +759,8 @@ public void setEarParameters(SceneManager sm)
 		rs = (GL4RenderSystem) engine.getRenderSystem();
 		elapsTime += engine.getElapsedTimeMillis();
 		
+		SceneManager sm = engine.getSceneManager();
+
 		// Check scripts last modified time and run them if they are changed
 		checkScripts();
 		
@@ -788,6 +821,7 @@ public void setEarParameters(SceneManager sm)
 		//SceneNode avatarN = sm.getSceneNode("manAvNode");
 		manSE.update();
 		
+		setEarParameters(sm);
 		
 		// End of physics
 	} // End of update()
