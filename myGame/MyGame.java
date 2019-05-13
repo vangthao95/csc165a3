@@ -20,6 +20,8 @@ import ray.rml.*;
 import ray.rage.rendersystem.gl4.GL4RenderSystem;
 import ray.rage.scene.SkeletalEntity.EndType;
 import static ray.rage.scene.SkeletalEntity.EndType.*;
+import ray.audio.*;
+import com.jogamp.openal.ALFactory;
 // -----------------------------------------------
 
 // ----------------From InputActions--------------
@@ -132,6 +134,10 @@ public class MyGame extends VariableFrameRateGame {
 	private SceneNode tessN;
 	private Tessellation tessE;
 	// End of terrain variables
+	
+	//Sound
+	private IAudioManager audioMgr;
+	private Sound throwingSound;
 	
     public MyGame(String serverAddr, int sPort)
 	{
@@ -459,8 +465,9 @@ public class MyGame extends VariableFrameRateGame {
 		
 		// Initial vertical update of monster
 		updateVerticalPos(object1);
+		initAudio(sm);
     }
-	/*
+	
 	// Physics Function
 	private void initPhysicsSystem()
 	{
@@ -486,7 +493,7 @@ public class MyGame extends VariableFrameRateGame {
 		ball2PhysObj = physicsEng.addSphereObject(physicsEng.nextUID(),
 			mass, temptf, 2.0f);
 		ball2PhysObj.setBounciness(1.0f);
-		ball2Node.setPhysicsObject(ball2PhysObj);
+		ball2Node.setPhysicsObject(ball2PhysObj);*/
 		temptf = toDoubleArray(groundNode.getLocalTransform().toFloatArray());
 		gndPlaneP = physicsEng.addStaticPlaneObject(physicsEng.nextUID(),
 			temptf, up, 0.0f);
@@ -495,7 +502,50 @@ public class MyGame extends VariableFrameRateGame {
 		groundNode.setLocalPosition(0, -7, -2);
 		groundNode.setPhysicsObject(gndPlaneP);
 		// can also set damping, friction, etc.
-	}*/
+	}
+	
+	
+	
+public void setEarParameters(SceneManager sm)
+	{ SceneNode avatar1 = sm.getSceneNode("manAvNode");
+	Vector3 avDir = avatar1.getWorldForwardAxis();
+	// note - should get the camera's forward direction
+	// - avatar direction plus azimuth	
+	audioMgr.getEar().setLocation(avatar1.getWorldPosition());
+	audioMgr.getEar().setOrientation(avDir, Vector3f.createFrom(0,1,0));
+	}
+	
+	
+	public void initAudio(SceneManager sm)
+	{ AudioResource resource1, resource2;
+	audioMgr = AudioManagerFactory.createAudioManager(
+	"ray.audio.joal.JOALAudioManager");
+	if (!audioMgr.initialize())
+	{ System.out.println("Audio Manager failed to initialize!");
+	return;
+	}
+	resource1 = audioMgr.createAudioResource("throwing.wav",
+	AudioResourceType.AUDIO_SAMPLE);
+	
+	throwingSound = new Sound(resource1,
+	SoundType.SOUND_EFFECT, 100, true);
+	
+	throwingSound.initialize(audioMgr);
+	throwingSound.setMaxDistance(100.0f);
+	throwingSound.setMinDistance(0.5f);
+	throwingSound.setRollOff(5.0f);
+	
+	SceneNode musicN = sm.getSceneNode("manAvNode");
+	throwingSound.setLocation(musicN.getWorldPosition());
+	setEarParameters(sm);
+	throwingSound.play();
+	}
+	
+	
+	
+	
+	
+	
 	private int MONSTER_STATE = 1;
 	// 1 walk towards player
 	// 2 turn in a random direction
@@ -532,7 +582,7 @@ public class MyGame extends VariableFrameRateGame {
 		{
 			object1.lookAt(avatar1, up);
 		}
-	}
+	} 
 	
     protected void setupInputs()
     {
@@ -718,7 +768,7 @@ public class MyGame extends VariableFrameRateGame {
 		}
 
 		if (running)
-		{/*
+		{
 			Matrix4 mat;
 			physicsEng.update(time);
 			for (SceneNode s : engine.getSceneManager().getSceneNodes())
@@ -728,7 +778,7 @@ public class MyGame extends VariableFrameRateGame {
 					mat = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
 					s.setLocalPosition(mat.value(0,3), mat.value(1,3), mat.value(2,3));
 				}
-			}*/
+			}
 		}
 
 		
@@ -777,6 +827,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	public void throwGrenade() throws IOException
 	{
+		
 		SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
 		manSE.stopAnimation();
 		manSE.playAnimation("throwAnimation", 2.0f, STOP, 0);
@@ -805,6 +856,7 @@ public class MyGame extends VariableFrameRateGame {
 		grenadePhysics.applyForce(frontVector.x() * 150.0f, 50.0f, frontVector.z() * 150.0f, currVector.x(), 0.0f, currVector.z());
 		//System.out.println("Grenade: " + grenadePhysics.getFriction());
 		grenadeExist = true;
+		throwingSound.play();
 	}
 	
 	public void deleteGrenade()
@@ -863,7 +915,7 @@ public class MyGame extends VariableFrameRateGame {
 		// use avatar Local coordinates to set position, including height
 		obj.setLocalPosition(newAvatarPosition);
 	}
-	/*
+	
 	public void keyPressed(KeyEvent e)
 	{
 		switch (e.getKeyCode())
@@ -907,7 +959,7 @@ public class MyGame extends VariableFrameRateGame {
 				}
 		}
 		super.keyPressed(e);
-	}*/
+	}
 	
 	private float[] toFloatArray(double[] arr)
 	{
