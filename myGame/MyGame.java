@@ -315,72 +315,8 @@ public class MyGame extends VariableFrameRateGame {
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
 	{
-		// Physics test objects
-		// Ball 1
-		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
-		ball1Node = sm.getRootSceneNode().createChildSceneNode("Ball1Node");
-		//ball1Node.attachObject(ball1Entity);
-		ball1Node.setLocalPosition(0, 2, -2);
-		// Ball 2
-		Entity ball2Entity = sm.createEntity("Ball2", "sphere.obj");
-		ball2Node = sm.getRootSceneNode().createChildSceneNode("Ball2Node");
-		//ball2Node.attachObject(ball2Entity);
-		ball2Node.setLocalPosition(-1,10,-2);
-		// Ground plane
-		//Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
-		//groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
-		//groundNode.attachObject(groundEntity);
-		// End of physics test objects
-		
-		
-    	ScriptEngineManager factory = new ScriptEngineManager();
-		// get a list of the script engines on this platform
-		List<ScriptEngineFactory> list = factory.getEngineFactories();
-		System.out.println("Script Engine Factories found:");
-		for (ScriptEngineFactory f : list)
-		{
-			System.out.println(" Name = " + f.getEngineName()
-			+ " language = " + f.getLanguageName()
-			+ " extensions = " + f.getExtensions());
-		}
-		
-		// run hello world script
-		executeScript(helloWorldS);
-    	
-    	// set up sky box
-    	Configuration conf = eng.getConfiguration();
-    	TextureManager tm = getEngine().getTextureManager();
-    	tm.setBaseDirectoryPath(conf.valueOf("assets.skyboxes.path"));
-    	Texture front = tm.getAssetByPath("zpos.png");
-    	Texture back = tm.getAssetByPath("zneg.png");
-    	Texture left = tm.getAssetByPath("xneg.png");
-    	Texture right = tm.getAssetByPath("xpos.png");
-    	Texture top = tm.getAssetByPath("ypos.png");
-    	Texture bottom = tm.getAssetByPath("yneg.png");
-    	 tm.setBaseDirectoryPath(conf.valueOf("assets.textures.path"));
-    	 
-    	// cubemap textures are flipped upside-down.
-    	// All textures must have the same dimensions, so any image�s
-    	// heights will work since they are all the same height
-    	AffineTransform xform = new AffineTransform();
-    	xform.translate(0, front.getImage().getHeight());
-    	xform.scale(1d, -1d);
-    	front.transform(xform);
-    	back.transform(xform);
-    	left.transform(xform);
-    	right.transform(xform);
-    	top.transform(xform);
-    	bottom.transform(xform);
-    	SkyBox sb = sm.createSkyBox(SKYBOX_NAME);
-    	sb.setTexture(front, SkyBox.Face.FRONT);
-    	sb.setTexture(back, SkyBox.Face.BACK);
-    	sb.setTexture(left, SkyBox.Face.LEFT);
-    	sb.setTexture(right, SkyBox.Face.RIGHT);
-    	sb.setTexture(top, SkyBox.Face.TOP);
-    	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
-    	sm.setActiveSkyBox(sb);
-    	
-		
+		findScriptEngine();
+	
 		//animations
 		SkeletalEntity manSE =
 		sm.createSkeletalEntity("manAv", "robot.rkm", "robot.rks");
@@ -390,7 +326,7 @@ public class MyGame extends VariableFrameRateGame {
 		tstate.setTexture(tex);
 		manSE.setRenderState(tstate);
 		// attach the entity to a scene node
-		avatar1= sm.getRootSceneNode().createChildSceneNode(manSE.getName()+"Node");
+		avatar1 = sm.getRootSceneNode().createChildSceneNode(manSE.getName()+"Node");
 		avatar1.attachObject(manSE);
 		avatar1.moveBackward(2.0f);
 		//avatar1.translate(0.0f,2.0f,0.0f);
@@ -429,35 +365,19 @@ public class MyGame extends VariableFrameRateGame {
 		//object2.attachObject(object2E);
 		object2.moveUp(.5f);
 
-        //sm.getAmbientLight().setIntensity(new Color(.5f, .5f, .5f));
-		Light sunLight = sm.createLight("sunLight", Light.Type.POINT);
-		sunLight.setAmbient(new Color(.5f, .5f, .5f));
-        sunLight.setDiffuse(new Color(.7f, .7f, .7f));
-		sunLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
-        sunLight.setRange(10f);
-		
-		SceneNode sunLightNode = avatar1.createChildSceneNode("sunLightNode");
-        sunLightNode.attachObject(sunLight);
-	
-        player1controller = new StretchController();
-		player2controller = new CustomController();
-		sm.addController(player1controller);
-		sm.addController(player2controller);
 		setupNetworking();
 		setupInputs();
 		setupOrbitCamera(eng, sm);
 		
-		tessE = sm.createTessellation("tessE", 6);
-		// subdivisions per patch: min=0, try up to 32
-		tessE.setSubdivisions(8f);
-		tessN = sm.getRootSceneNode().createChildSceneNode("TessN");
-		tessN.attachObject(tessE);
-		tessN.scale(20, 40, 20);
-		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
-		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
+
+		initTerrain(eng, sm);
+		initSkyBox(eng, sm);
+		initLights(sm);
+		
 		// Physics
-		//initPhysicsSystem();
-		//createRagePhysicsWorld();
+		initPhysicsExamples(sm);
+		initPhysicsSystem();
+		createRagePhysicsWorld();
 		
 		// Initial vertical update of player so
 		// player doesn't have to move to get above ground
@@ -467,6 +387,101 @@ public class MyGame extends VariableFrameRateGame {
 		updateVerticalPos(object1);
 		initAudio(sm);
     }
+	
+	private void findScriptEngine()
+	{
+		ScriptEngineManager factory = new ScriptEngineManager();
+		// get a list of the script engines on this platform
+		List<ScriptEngineFactory> list = factory.getEngineFactories();
+		System.out.println("Script Engine Factories found:");
+		for (ScriptEngineFactory f : list)
+		{
+			System.out.println(" Name = " + f.getEngineName()
+			+ " language = " + f.getLanguageName()
+			+ " extensions = " + f.getExtensions());
+		}
+	}
+	
+	private void initTerrain(Engine eng, SceneManager sm) throws IOException
+	{
+		tessE = sm.createTessellation("tessE", 6);
+		// subdivisions per patch: min=0, try up to 32
+		tessE.setSubdivisions(8f);
+		tessN = sm.getRootSceneNode().createChildSceneNode("TessN");
+		tessN.attachObject(tessE);
+		tessN.scale(20, 40, 20);
+		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
+		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
+	}
+	
+	private void initSkyBox(Engine eng, SceneManager sm) throws IOException
+	{
+		// set up sky box
+    	Configuration conf = eng.getConfiguration();
+    	TextureManager tm = getEngine().getTextureManager();
+    	tm.setBaseDirectoryPath(conf.valueOf("assets.skyboxes.path"));
+    	Texture front = tm.getAssetByPath("zpos.png");
+    	Texture back = tm.getAssetByPath("zneg.png");
+    	Texture left = tm.getAssetByPath("xneg.png");
+    	Texture right = tm.getAssetByPath("xpos.png");
+    	Texture top = tm.getAssetByPath("ypos.png");
+    	Texture bottom = tm.getAssetByPath("yneg.png");
+    	 tm.setBaseDirectoryPath(conf.valueOf("assets.textures.path"));
+    	 
+    	// cubemap textures are flipped upside-down.
+    	// All textures must have the same dimensions, so any image�s
+    	// heights will work since they are all the same height
+    	AffineTransform xform = new AffineTransform();
+    	xform.translate(0, front.getImage().getHeight());
+    	xform.scale(1d, -1d);
+    	front.transform(xform);
+    	back.transform(xform);
+    	left.transform(xform);
+    	right.transform(xform);
+    	top.transform(xform);
+    	bottom.transform(xform);
+    	SkyBox sb = sm.createSkyBox(SKYBOX_NAME);
+    	sb.setTexture(front, SkyBox.Face.FRONT);
+    	sb.setTexture(back, SkyBox.Face.BACK);
+    	sb.setTexture(left, SkyBox.Face.LEFT);
+    	sb.setTexture(right, SkyBox.Face.RIGHT);
+    	sb.setTexture(top, SkyBox.Face.TOP);
+    	sb.setTexture(bottom, SkyBox.Face.BOTTOM);
+    	sm.setActiveSkyBox(sb);
+	}
+	
+	private void initLights(SceneManager sm) throws IOException
+	{
+		        //sm.getAmbientLight().setIntensity(new Color(.5f, .5f, .5f));
+		Light sunLight = sm.createLight("sunLight", Light.Type.POINT);
+		sunLight.setAmbient(new Color(.5f, .5f, .5f));
+        sunLight.setDiffuse(new Color(.7f, .7f, .7f));
+		sunLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
+        sunLight.setRange(10f);
+		
+		SceneNode sunLightNode = avatar1.createChildSceneNode("sunLightNode");
+        sunLightNode.attachObject(sunLight);
+	}
+	
+	private void initPhysicsExamples(SceneManager sm) throws IOException
+	{
+		// Physics test objects
+		// Ball 1
+		Entity ball1Entity = sm.createEntity("ball1", "earth.obj");
+		ball1Node = sceneManager.getRootSceneNode().createChildSceneNode("Ball1Node");
+		//ball1Node.attachObject(ball1Entity);
+		ball1Node.setLocalPosition(0, 2, -2);
+		// Ball 2
+		Entity ball2Entity = sm.createEntity("Ball2", "sphere.obj");
+		ball2Node = sm.getRootSceneNode().createChildSceneNode("Ball2Node");
+		//ball2Node.attachObject(ball2Entity);
+		ball2Node.setLocalPosition(-1,10,-2);
+		// Ground plane
+		Entity groundEntity = sm.createEntity(GROUND_E, "cube.obj");
+		groundNode = sm.getRootSceneNode().createChildSceneNode(GROUND_N);
+		groundNode.attachObject(groundEntity);
+		// End of physics test objects
+	}
 	
 	// Physics Function
 	private void initPhysicsSystem()
