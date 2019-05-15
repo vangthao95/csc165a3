@@ -17,6 +17,7 @@ public class ProtocolClient extends GameConnectionClient
 	private UUID id; // Unique id for each player
 	private Vector<GhostAvatar> ghostAvatars; // Store ghost avatars of all other players
 	private ConcurrentHashMap<UUID, GhostNPC> ghostNPCs;
+	private boolean handlingNPC;
 	
 	public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game)
 	throws IOException
@@ -26,6 +27,7 @@ public class ProtocolClient extends GameConnectionClient
 		this.id = UUID.randomUUID();
 		this.ghostAvatars = new Vector<GhostAvatar>();
 		this.ghostNPCs = new ConcurrentHashMap<UUID, GhostNPC>();
+		handlingNPC = false;
 	}
 	@Override
 	protected void processPacket(Object msg)
@@ -39,6 +41,8 @@ public class ProtocolClient extends GameConnectionClient
 		// 0th Index contains type of message
 		if(messageTokens.length > 0)
 		{
+			
+			// NPC stuff maybe
 			if (messageTokens[0].compareTo("NPC") == 0)
 			{
 				if (messageTokens[1].compareTo("moveNPC") == 0)
@@ -50,8 +54,12 @@ public class ProtocolClient extends GameConnectionClient
 					Vector3 npcPos = Vector3f.createFrom(x, y, z);
 					updateNpcMoveGhostAvatars(npcID, npcPos);
 				}
+				else if (messageTokens[1].compareTo("setAsClientHandlingNPC") == 0)
+				{
+					handlingNPC = true;
+				}
 			}
-			if(messageTokens[0].compareTo("join") == 0) // receive join
+			else if(messageTokens[0].compareTo("join") == 0) // receive join
 			{ // format: join,success or join,failure
 				if(messageTokens[1].compareTo("success") == 0)
 				{

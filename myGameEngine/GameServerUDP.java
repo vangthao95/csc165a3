@@ -18,8 +18,9 @@ import ray.rml.Vector3;
 public class GameServerUDP extends GameConnectionServer<UUID>
 {
 	// Interval to check status of clients in seconds
-	private long CHECK_CLIENTS = 30;
-	private Vector<UUID> clientsReplies;
+	private long CHECK_CLIENTS = 10;
+	private Vector<UUID> clientsReplies; // Store id of those who replies to compare to client list
+	private UUID Client_Handling_NPC;
 	//private ConcurrentHashMap<UUID, ServerGhostAvatar> listOfPlayers;
 	
 	public GameServerUDP(int localPort) throws IOException
@@ -27,7 +28,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		super(localPort, ProtocolType.UDP);
 		clientsReplies = new Vector<UUID>();
 		checkForClients();
-
+		Client_Handling_NPC = null;
 	}
  
 	// Periodically check for connected clients
@@ -57,6 +58,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		
 		timer.scheduleAtFixedRate(checkForClientsTask, 1000, CHECK_CLIENTS * 1000); // Start the checking
 	}
+	
 	@Override
 	public void processPacket(Object o, InetAddress senderIP, int sndPort)
 	{
@@ -92,8 +94,13 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 					ci = getServerSocket().createClientInfo(senderIP, sndPort);
 					UUID clientID = UUID.fromString(msgTokens[1]);
 					System.out.println("Received join message from id: " + clientID.toString());
+					clientsReplies.add(clientID); // Newly joined players don't have to send status check reply until next check.
 					addClient(ci, clientID);
 					sendJoinedMessage(clientID);
+					if (Client_Handling_NPC == null)
+					{
+						setAsClientHandlingNPC(clientID);
+					}
 				}
 				catch (IOException e)
 				{
@@ -323,6 +330,11 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 						System.out.println("Client was not found: " + key);
 						removeClient(key);
 						sendByeMessages(key);
+						if (key == Client_Handling_NPC)
+						{
+							Client_Handling_NPC = null;
+							setNewNPCHandler();
+						}
 				}
 			}
 		}
@@ -348,4 +360,35 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		curPlayerGhost.setPos(newPos);
 		
 	}*/
+	
+	private void setAsClientHandlingNPC(UUID clientID)
+	{
+		try
+		{
+			Client_Handling_NPC = clientID;
+			String message = new String("NPC,setAsClientHandlingNPC");
+			sendPacket(message, clientID);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private void setNewNPCHandler()
+	{
+			// Pick new client to handle npc from
+			// those who replied from the status check
+			// If no clients replied successfully
+			// then leave as null so that next client
+			// that connects is automatically set as 
+			// the npc handler.
+			if (clientsReplies.isEmpty())
+			{
+				return;
+			}
+			
+			UUID newNPCHandler = clientsReplies.firstElement();
+			setAsClientHandlingNPC(newNPCHandler);
+	}
 }
