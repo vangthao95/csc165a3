@@ -11,9 +11,10 @@ public class GhostNPC
 	private UUID id;
 	private SceneNode node;
 	
-	public GhostNPC(UUID id) // constructor
+	public GhostNPC(SceneNode node, UUID id) // constructor
 	{
 		this.id = id;
+		this.node = node;
 	}
 	
 	public UUID getID()

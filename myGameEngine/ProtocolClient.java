@@ -10,13 +10,15 @@ import ray.networking.client.GameConnectionClient;
 import java.util.concurrent.ConcurrentHashMap;
 import ray.rml.*;
 import myGame.*;
+import java.util.Iterator;
+import ray.rage.scene.*;
 
 public class ProtocolClient extends GameConnectionClient
 {
 	private MyGame game; // Used to call functions like create ghost avatar
 	private UUID id; // Unique id for each player
 	private Vector<GhostAvatar> ghostAvatars; // Store ghost avatars of all other players
-	private ConcurrentHashMap<UUID, GhostNPC> ghostNPCs;
+	private Vector<GhostNPC> ghostNPCs; // Store NPCs
 	private boolean handlingNPC;
 	
 	public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game)
@@ -26,9 +28,15 @@ public class ProtocolClient extends GameConnectionClient
 		this.game = game;
 		this.id = UUID.randomUUID();
 		this.ghostAvatars = new Vector<GhostAvatar>();
-		this.ghostNPCs = new ConcurrentHashMap<UUID, GhostNPC>();
+		this.ghostNPCs = new Vector<GhostNPC>();
 		handlingNPC = false;
 	}
+	
+	public void setController()
+	{
+		
+	}
+	
 	@Override
 	protected void processPacket(Object msg)
 	{
@@ -47,16 +55,33 @@ public class ProtocolClient extends GameConnectionClient
 			{
 				if (messageTokens[1].compareTo("moveNPC") == 0)
 				{
-					UUID npcID = UUID.fromString(messageTokens[2]);
+					/*UUID npcID = UUID.fromString(messageTokens[2]);
 					float x = Float.parseFloat(messageTokens[3]);
 					float z = Float.parseFloat(messageTokens[5]);
 					float y = game.getVericalPosition(x, z);
 					Vector3 npcPos = Vector3f.createFrom(x, y, z);
-					updateNpcMoveGhostAvatars(npcID, npcPos);
+					updateNpcMoveGhostAvatars(npcID, npcPos);*/
 				}
 				else if (messageTokens[1].compareTo("setAsClientHandlingNPC") == 0)
 				{
+					System.out.println("Processing NPC controller...");
 					handlingNPC = true;
+					game.initializeNPCcontroller();
+			
+				}
+				else if (messageTokens[1].compareTo("createNPC") == 0)
+				{
+					System.out.println("A NPC has been created");
+				}
+				else if (messageTokens[1].compareTo("requestingInfo") == 0)
+				{
+					System.out.println("A client is requesting NPC info");
+					UUID requestorID = UUID.fromString(messageTokens[2]);
+					sendNPCInfoReply(requestorID);
+				}
+				else if (messageTokens[1].compareTo("requestingInfoReply") == 0)
+				{
+					processGhostInfoReply(messageTokens);
 				}
 			}
 			else if(messageTokens[0].compareTo("join") == 0) // receive join
@@ -197,8 +222,8 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		try
 		{
-			GhostAvatar newPlayer = new GhostAvatar(newPlayerID);
-			game.addGhostAvatarToGameWorld(newPlayer, pos);
+			SceneNode ghostN = game.addGhostAvatarToGameWorld(pos, newPlayerID);
+			GhostAvatar newPlayer = new GhostAvatar(ghostN, newPlayerID);
 			ghostAvatars.add(newPlayer);
 
 		}
@@ -213,9 +238,7 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		try
 		{
-			GhostNPC newNPC = new GhostNPC(GhostNPCID);
-			game.addGhostNPCToGameWorld(newNPC, pos);
-			ghostNPCs.put(GhostNPCID, newNPC);
+			
 		}
 		catch (Exception e)
 		{
@@ -286,8 +309,7 @@ public class ProtocolClient extends GameConnectionClient
 	
 	public void updateNpcMoveGhostAvatars(UUID id, Vector3 pos)
 	{
-		GhostNPC curGhost = ghostNPCs.get(id);
-		curGhost.setPos(pos);
+
 	}
 	
 	public void sendStatusReply()
@@ -324,7 +346,74 @@ public class ProtocolClient extends GameConnectionClient
 		{
 			e.printStackTrace();
 		}
-		
-		
+	}
+	
+	public void addGhostNPC(Vector3 pos)
+	{
+		try
+		{
+			String message = new String("NPC,");
+			message += "createNPC,";
+			message += id.toString() + ",";
+			message += pos.x() + "," + pos.y() + "," + pos.z();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		// Randomize a position away from player
+	}
+	
+	public int getNPCcount()
+	{
+		return ghostNPCs.size();
+	}
+	
+	public void sendNPCInfoReply(UUID requestorID)
+	{
+		Iterator iter = null;
+		try
+		{
+			iter = game.getnpcIterator();
+			if (iter == null) 
+				return;
+			String message = new String("NPC,requestingInfoReply," + id.toString() + "," + requestorID.toString());
+			while (iter.hasNext())
+			{
+				System.out.println("Processing Ghosts to send info to other clients...");
+				GhostNPC currNPC = (GhostNPC) iter.next();
+				UUID npcID = currNPC.getID(); // ghost UUID
+				Vector3 pos = currNPC.getPos();// ghost pos
+				
+				message += "," + npcID.toString();
+				message += "," + pos.x() + "," + pos.y() + "," + pos.z();
+			}
+			message += ",endNPCInfo";
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void processGhostInfoReply(String[] messageTokens)
+	{
+		System.out.println("Ghost info reply successfully received");
+		int i = 4;
+		while (messageTokens[i].compareTo("endNPCInfo") != 0)
+		{
+			UUID npcID = UUID.fromString(messageTokens[i]);
+			i++;
+			float x = Float.parseFloat(messageTokens[i]);
+			i++;
+			float y = Float.parseFloat(messageTokens[i]);
+			i++;
+			float z = Float.parseFloat(messageTokens[i]);
+			i++;
+			Vector3 pos = Vector3f.createFrom(x, y, z);
+			System.out.println("Creating ghost with xyz: " + x + " " + y + " " + z);
+		}
 	}
 }

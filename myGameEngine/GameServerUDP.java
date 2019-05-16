@@ -22,6 +22,9 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	private Vector<UUID> clientsReplies; // Store id of those who replies to compare to client list
 	private UUID Client_Handling_NPC;
 	//private ConcurrentHashMap<UUID, ServerGhostAvatar> listOfPlayers;
+	//private boolean NPCExists;
+	private int npcCount; // Store how many npcs have been created and not destroyed
+
 	
 	public GameServerUDP(int localPort) throws IOException
 	{
@@ -29,6 +32,8 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		clientsReplies = new Vector<UUID>();
 		checkForClients();
 		Client_Handling_NPC = null;
+		npcCount = 0;
+		//NPCExists = false;
 	}
  
 	// Periodically check for connected clients
@@ -69,9 +74,9 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		String[] msgTokens = message.split(",");
 		if(msgTokens.length > 0)
 		{	
-			if (msgTokens[0].compareTo("NPC") == 0)
-			{
-				if (msgTokens[1].compareTo("moveNPC") == 0)
+			if ((msgTokens[0].compareTo("NPC") == 0) && (msgTokens[2].compareTo(Client_Handling_NPC.toString()) == 0))
+			{	
+				if (msgTokens[2].compareTo("moveNPC") == 0)
 				{
 					try
 					{
@@ -79,6 +84,32 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 						forwardPacketToAll(message, UUID.fromString(msgTokens[2]));
 					}
 					catch (Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+				else if (msgTokens[1].compareTo("createNPC") == 0)
+				{
+					npcCount++;
+					UUID clientID = UUID.fromString(msgTokens[2]);
+					try
+					{
+						forwardPacketToAll(message, clientID);
+					}
+					catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+				}
+				else if (msgTokens[1].compareTo("requestingInfoReply") == 0)
+				{
+					UUID requestingClientID = UUID.fromString(msgTokens[3]);
+					try
+					{
+						System.out.println("Sending NPC info request to client");
+						sendPacket(message, requestingClientID);
+					}
+					catch (IOException e)
 					{
 						e.printStackTrace();
 					}
@@ -100,6 +131,11 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 					if (Client_Handling_NPC == null)
 					{
 						setAsClientHandlingNPC(clientID);
+					}
+					else
+					{
+						// Request controller to send npc info
+						sendNPcinfo(clientID);
 					}
 				}
 				catch (IOException e)
@@ -391,4 +427,18 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			UUID newNPCHandler = clientsReplies.firstElement();
 			setAsClientHandlingNPC(newNPCHandler);
 	}
+	
+	private void sendNPcinfo(UUID clientID)
+	{
+		try
+		{
+			String message = new String("NPC,requestingInfo," + clientID.toString());
+			sendPacket(message, Client_Handling_NPC);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 }

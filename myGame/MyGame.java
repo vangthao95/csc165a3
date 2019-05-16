@@ -63,9 +63,14 @@ import ray.physics.PhysicsEngine;
 import ray.physics.PhysicsObject;
 import ray.physics.PhysicsEngineFactory;
 // Physics end
+
+import java.util.UUID;
+import java.util.Iterator;
 public class MyGame extends VariableFrameRateGame {
 	// NPCs variables
 	private int uniqueGhostNPCs = 0;
+	private NPCcontroller npcController;
+	private boolean controller;
 	//
 	
 	
@@ -151,7 +156,8 @@ public class MyGame extends VariableFrameRateGame {
 		
 		cameraSpeedLastModifiedtime = cameraSpeedS.lastModified();
 		initParametersLastModifiedTime = initParameters.lastModified();
-		
+		controller = false;
+		npcController = null;
 	}
 
     public static void main(String[] args)
@@ -246,19 +252,16 @@ public class MyGame extends VariableFrameRateGame {
 		gameObjectsToRemove.clear();*/
 	}
 	
-	public void addGhostAvatarToGameWorld(GhostAvatar avatar, Vector3 pos)
+	public SceneNode addGhostAvatarToGameWorld(Vector3 pos, UUID id)
 	throws IOException
 	{
-		if (avatar != null)
-		{
-			Entity ghostE = sceneManager.createEntity("ghostE" + avatar.getID().toString(), "avatar_v1.obj");
-			ghostE.setPrimitive(Primitive.TRIANGLES);
-			SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("ghostN" + avatar.getID().toString());
-			ghostN.attachObject(ghostE);
-			ghostN.setLocalPosition(pos);
-			ghostN.scale(0.05f, 0.05f, 0.05f);
-			avatar.setNode(ghostN);
-		}
+		Entity ghostE = sceneManager.createEntity("ghostE" + id.toString(), "avatar_v1.obj");
+		ghostE.setPrimitive(Primitive.TRIANGLES);
+		SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("ghostN" + id.toString());
+		ghostN.attachObject(ghostE);
+		ghostN.setLocalPosition(pos);
+		ghostN.scale(0.05f, 0.05f, 0.05f);
+		return ghostN;
 	}
 	
 	public void removeGhostAvatar(GhostAvatar avatar)
@@ -375,9 +378,9 @@ public class MyGame extends VariableFrameRateGame {
 		initLights(sm);
 		
 		// Physics
-		initPhysicsExamples(sm);
-		initPhysicsSystem();
-		createRagePhysicsWorld();
+		//initPhysicsExamples(sm);
+		//initPhysicsSystem();
+		//createRagePhysicsWorld();
 		
 		// Initial vertical update of player so
 		// player doesn't have to move to get above ground
@@ -765,9 +768,17 @@ public class MyGame extends VariableFrameRateGame {
 	}
 	float deleteGrenadeTime = 0.0f;
 	float npcStateChangeTime = 0.0f;
+	
+	
+	
+	
 	@Override
     protected void update(Engine engine) {
 		im.update(elapsTime);
+		if (controller && npcController != null)
+		{
+			npcController.update();
+		}
 		processNetworking(elapsTime);
 		orbitController1.updateCameraPosition();
 		//orbitController2.updateCameraPosition();
@@ -940,7 +951,7 @@ public class MyGame extends VariableFrameRateGame {
 		avatar1.setLocalPosition(newAvatarPosition);
 	}
 	
-	public float getVericalPosition(float x, float z)
+	public float getVerticalPosition(float x, float z)
 	{
 		return tessE.getWorldHeight(x, z);
 	}
@@ -1086,6 +1097,31 @@ public class MyGame extends VariableFrameRateGame {
 		}
 	}
 
+	public void initializeNPCcontroller()
+	{
+		controller = true;
+		npcController = new NPCcontroller(this, protClient);
+		System.out.println("NPC controller initialized...");
+	}
+	
+	public SceneNode getNPCnode(Vector3 pos, UUID id) throws IOException
+	{
+		Entity ghostE = sceneManager.createEntity("NpcE" + id.toString(), "monster1_textured.obj");
+		ghostE.setPrimitive(Primitive.TRIANGLES);
+		SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("NpcN" + id.toString());
+		ghostN.attachObject(ghostE);
+		ghostN.setLocalPosition(pos);
+		ghostN.scale(0.05f, 0.05f, 0.05f);
+		return ghostN;
+	}
+	
+	public Iterator getnpcIterator()
+	{
+		if (controller && npcController != null)
+			return npcController.getIterator();
+		System.out.println("Ghost NPC Iterator returned null");
+		return null;
+	}
 }
 
 	

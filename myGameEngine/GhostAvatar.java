@@ -9,9 +9,10 @@ public class GhostAvatar
 	private UUID id;
 	private SceneNode node;
 	
-	public GhostAvatar(UUID id)
+	public GhostAvatar(SceneNode node, UUID id)
 	{
 		this.id = id;
+		this.node = node;
 	}
 	
 	public UUID getID()
