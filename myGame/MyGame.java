@@ -616,44 +616,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	
 	
-	private int MONSTER_STATE = 1;
-	// 1 walk towards player
-	// 2 turn in a random direction
-	// 3 walk in the direction it is currently facing
-	// 4 look at player
-	private void updateMonster()
-	{
-		Vector3 up = Vector3f.createUnitVectorY();
-		if (MONSTER_STATE == 1)
-		{
-			object1.lookAt(avatar1, up);
-			Vector3 currPos = object1.getLocalPosition();
-			Vector3 playerPos = getPlayerPosition();
-			Vector3 distVector = Vector3f.createFrom(currPos.x() - playerPos.x(), currPos.y() - playerPos.y(), currPos.z() - playerPos.z());
-			float dist = distVector.length();
-			if (dist > 1.0f)
-			{
-				object1.moveForward(0.01f);
-				updateVerticalPos(object1);
-			}
-		}
-		else if (MONSTER_STATE == 2)
-		{
-			Random r = new Random();
-			float degreesToTurn = r.nextInt(11) - 5;
-			Angle rotAmt = rotAmt = Degreef.createFrom(degreesToTurn);
-			object1.rotate(rotAmt, up);
-		}
-		else if (MONSTER_STATE == 3)
-		{
-			object1.moveForward(0.01f);
-		}
-		else if (MONSTER_STATE == 4)
-		{
-			object1.lookAt(avatar1, up);
-		}
-	} 
-	
+
     protected void setupInputs()
     {
     	im =  new GenericInputManager();
@@ -794,7 +757,7 @@ public class MyGame extends VariableFrameRateGame {
 		return avatar1.getLocalPosition();
 	}
 	float deleteGrenadeTime = 0.0f;
-	float npcStateChangeTime = 0.0f;
+
 	
 	
 	
@@ -816,29 +779,7 @@ public class MyGame extends VariableFrameRateGame {
 		SceneManager sm = engine.getSceneManager();
 
 		// Check scripts last modified time and run them if they are changed
-		checkScripts();
-		
-		
-		// NPC logic and update
-		npcStateChangeTime += engine.getElapsedTimeMillis();
-		if (npcStateChangeTime > 5000) // Change npc state every 5 seconds
-		{
-			Random r = new Random();
-			int chanceOfMonsterState =  r.nextInt(100) + 1;
-			// 10% monster walk towards player
-			// 30% monster turn in a random direction
-			// 15% monster look in the direction it is facing
-			// 45% monster look at player and doesnt move
-			if (chanceOfMonsterState >= 1 || chanceOfMonsterState <= 10) // 1-10
-				MONSTER_STATE = 1;
-			else if (chanceOfMonsterState >= 11 || chanceOfMonsterState <= 40) // 11-40
-				MONSTER_STATE = 2;
-			else if (chanceOfMonsterState >= 41 || chanceOfMonsterState <= 55) // 41-55
-				MONSTER_STATE = 3;
-			else if (chanceOfMonsterState >= 56 || chanceOfMonsterState <= 100) // 56-100
-				MONSTER_STATE = 4;
-		}
-		updateMonster();
+		checkScripts();		
 		
 		// Physics
 		float time = engine.getElapsedTimeMillis();
