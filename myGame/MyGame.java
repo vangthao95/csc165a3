@@ -1141,7 +1141,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	public Iterator getnpcIterator()
 	{
-		if (controller && npcController != null)
+		if (npcController != null)
 			return npcController.getIterator();
 		System.out.println("Ghost NPC Iterator returned null");
 		return null;

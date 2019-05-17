@@ -55,11 +55,11 @@ public class ProtocolClient extends GameConnectionClient
 			{
 				if (messageTokens[1].compareTo("move") == 0)
 				{
-					
+					handleNPCMove(messageTokens);
 				}
 				else if (messageTokens[1].compareTo("rotate") == 0)
 				{
-					
+					handleNPCrotate(messageTokens);
 				}
 				else if (messageTokens[1].compareTo("setAsClientHandlingNPC") == 0)
 				{
@@ -416,7 +416,7 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		try
 		{
-			String message = new String("NPC,rotate," + id.toString() + npcID.toString());
+			String message = new String("NPC,rotate," + id.toString() + "," + npcID.toString());
 			message += "," + pos.x() + "," + pos.y() + "," + pos.z();
 			sendPacket(message);
 		}
@@ -426,17 +426,63 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	
+	public void handleNPCrotate(String[] messageTokens)
+	{
+		UUID npcID = UUID.fromString(messageTokens[3]);
+		float x = Float.parseFloat(messageTokens[4]);
+		float y = Float.parseFloat(messageTokens[5]);
+		float z = Float.parseFloat(messageTokens[6]);
+		Vector3 pos = Vector3f.createFrom(x,y,z);
+		Iterator iter = null;
+		iter = game.getnpcIterator();
+		if (iter != null)
+		{
+			while (iter.hasNext())
+			{
+				GhostNPC curNPC = (GhostNPC) iter.next();
+				if (curNPC.getID().toString().compareTo(npcID.toString()) == 0)
+				{
+					curNPC.lookAt(pos, Vector3f.createFrom(0.0f, 1.0f, 0.0f));
+					return;
+				}
+			}
+		}
+	}
+	
 	public void moveNPC(UUID npcID, Vector3 pos)
 	{
 		try
 		{
-			String message = new String("NPC,move," + id.toString() + npcID.toString());
+			String message = new String("NPC,move," + id.toString() + "," + npcID.toString());
 			message += "," + pos.x() + "," + pos.y() + "," + pos.z();
 			sendPacket(message);
 		}
 		catch (IOException e)
 		{
 			e.printStackTrace();
+		}
+	}
+	
+	public void handleNPCMove(String[] messageTokens)
+	{
+		UUID npcID = UUID.fromString(messageTokens[3]);
+		float x = Float.parseFloat(messageTokens[4]);
+		float y = Float.parseFloat(messageTokens[5]);
+		float z = Float.parseFloat(messageTokens[6]);
+		Vector3 pos = Vector3f.createFrom(x,y,z);
+		Iterator iter = null;
+		iter = game.getnpcIterator();
+		if (iter != null)
+		{
+			while (iter.hasNext())
+			{
+				GhostNPC curNPC = (GhostNPC) iter.next();
+				if (curNPC.getID().toString().compareTo(npcID.toString()) == 0)
+				{
+					curNPC.setPos(pos);
+					return;
+				}
+			}
 		}
 	}
 }

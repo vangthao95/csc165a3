@@ -57,6 +57,8 @@ public class NPCcontroller
 				if (pos != null)
 				{
 					npc.getNode().moveForward(0.01f);
+					game.updateVerticalPos(npc.getNode());
+					protClient.moveNPC(npc.getID(), npc.getPos());
 				}
 				
 			}
@@ -149,6 +151,11 @@ public class NPCcontroller
 		return npcList.iterator();
 	}
 	
+	public void updateVerticalPos(SceneNode node)
+	{
+		game.updateVerticalPos(node);
+	}
+	
 	public class walkTowardsPos extends BTAction
 	{
 		ProtocolClient protClient;
@@ -165,6 +172,7 @@ public class NPCcontroller
 		protected BTStatus update(float elapsedTime)
 		{
 			curNPC.getNode().moveForward(0.01f);
+			npcC.updateVerticalPos(curNPC.getNode());
 			protClient.moveNPC(curNPC.getID(), curNPC.getPos());
 			
 			return BTStatus.BH_SUCCESS;
@@ -197,7 +205,7 @@ public class NPCcontroller
 		ProtocolClient protClient;
 		NPCcontroller npcC;
 		GhostNPC curNPC;
-		private float DISTANCE_TO_PLAYER = 3f;
+		private float DISTANCE_TO_PLAYER = 2f;
 		
 		public playerNearBy(ProtocolClient c, NPCcontroller npcC, GhostNPC npc, boolean toNegate)
 		{
@@ -242,6 +250,10 @@ public class NPCcontroller
 				curNPC.setMoveTowards(pos);
 			}
 			
+			if (playerNear == false)
+			{
+				curNPC.setMoveTowards(null);
+			}
 			return playerNear;
 		}
 	}
