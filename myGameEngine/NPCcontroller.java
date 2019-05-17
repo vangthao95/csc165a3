@@ -270,6 +270,7 @@ public class NPCcontroller
 				{
 					playerNear = true;
 					curNPC.setMoveTowards(pPos);
+					closestLength = length;
 				}
 				
 			}
