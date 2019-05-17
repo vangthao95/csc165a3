@@ -66,6 +66,7 @@ import ray.physics.PhysicsEngineFactory;
 
 import java.util.UUID;
 import java.util.Iterator;
+import ray.rage.rendersystem.states.TextureState.WrapMode;
 public class MyGame extends VariableFrameRateGame {
 	SkeletalEntity manSE;
 	
@@ -117,7 +118,7 @@ public class MyGame extends VariableFrameRateGame {
 	private float elapsTime = 0.0f;
 	private int counter, score = 0;
 	private Camera camera;
-	private SceneNode avatar1, object1, object2;
+	private SceneNode avatar1, object1, object2, ufo;
 	private SceneNode cameraN1;
 	// skybox
 	private static final String SKYBOX_NAME = "MySkyBox";
@@ -393,6 +394,7 @@ public class MyGame extends VariableFrameRateGame {
 		initTerrain(eng, sm);
 		initSkyBox(eng, sm);
 		initLights(sm);
+		initUFO(sm);
 		
 		// Physics
 		//initPhysicsExamples(sm);
@@ -436,6 +438,27 @@ public class MyGame extends VariableFrameRateGame {
 		tessN.scale(20, 40, 20);
 		tessE.setHeightMap(this.getEngine(), "heightmap1.jpeg");
 		tessE.setTexture(this.getEngine(), "hexagons.jpeg");
+		//tessE.setMultiplier(5.0f);
+	}
+	
+	private void initUFO(SceneManager sm) throws IOException
+	{
+		Entity ufoE = sm.createEntity("ufo", "untitled.obj");
+		ufo = sm.getRootSceneNode().createChildSceneNode(ufoE.getName() + "Node");
+        ufoE.setPrimitive(Primitive.TRIANGLES);
+		ufo.attachObject(ufoE);
+		ufo.moveUp(1.2f);
+		ufo.moveForward(2.0f);
+		ufo.scale(0.2f, 0.2f, 0.2f);
+		
+		Light ufoLight = sm.createLight("ufoLight", Light.Type.SPOT);
+        ufoLight.setAmbient(new Color(.5f, .5f, .5f));
+        ufoLight.setDiffuse(java.awt.Color.RED);
+		ufoLight.setSpecular(java.awt.Color.BLUE);
+        ufoLight.setRange(4f);
+        ufoLight.setConstantAttenuation(.0005f);
+		SceneNode ufoLightNode = ufo.createChildSceneNode("ufoLightNode");
+        ufoLightNode.attachObject(ufoLight);
 	}
 	
 	private void initSkyBox(Engine eng, SceneManager sm) throws IOException
@@ -482,6 +505,7 @@ public class MyGame extends VariableFrameRateGame {
         sunLight.setDiffuse(new Color(.7f, .7f, .7f));
 		sunLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
         sunLight.setRange(10f);
+		sunLight.setConstantAttenuation(.75f);
 		
 		SceneNode sunLightNode = avatar1.createChildSceneNode("sunLightNode");
         sunLightNode.attachObject(sunLight);
