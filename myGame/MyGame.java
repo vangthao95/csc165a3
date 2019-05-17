@@ -1302,7 +1302,9 @@ public class MyGame extends VariableFrameRateGame {
 					{
 						exception.printStackTrace();
 					}
-				}
+				
+				break;
+				
 				case KeyEvent.VK_T:
 				if (lightOnOff == false)
 				{
@@ -1314,6 +1316,7 @@ public class MyGame extends VariableFrameRateGame {
 					sunLight.setVisible(false);
 					lightOnOff = false;
 				}
+				break;
 		}
 		super.keyPressed(e);
 	}
