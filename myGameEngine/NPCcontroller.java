@@ -42,6 +42,7 @@ public class NPCcontroller
 			UUID npcID = npc.getID();
 			if (id.toString().compareTo(npcID.toString()) == 0)
 			{
+				protClient.sendDeleteMsg(npcID);
 				SceneNode n = npc.getNode();
 				npcList.remove(npc);
 				game.destroyNPCObjects(n);

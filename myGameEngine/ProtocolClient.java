@@ -89,12 +89,11 @@ public class ProtocolClient extends GameConnectionClient
 					processGhostInfoReply(messageTokens);
 				}
 			}
-			else if (messageTokens[0].compareTo("deleteNPC") == 0)
-			{
-				UUID ghostID = UUID.fromString(messageTokens[2]);
-				game.deleteGhostNPC(ghostID);
-			}
-			
+			else if (messageTokens[0].compareTo("statusCheck") == 0)
+			{ // format: statusCheck
+				System.out.println("Status check received from server... sending reply...");
+				sendStatusReply();
+			}			
 			else if(messageTokens[0].compareTo("join") == 0) // receive join
 			{ // format: join,success or join,failure
 				if(messageTokens[1].compareTo("success") == 0)
@@ -147,10 +146,10 @@ public class ProtocolClient extends GameConnectionClient
 				System.out.println("Detail requested from server");
 				sendWantRequestReply(messageTokens[1]);
 			}
-			else if (messageTokens[0].compareTo("statusCheck") == 0)
-			{ // format: statusCheck
-				System.out.println("Status check received from server... sending reply...");
-				sendStatusReply();
+			else if (messageTokens[0].compareTo("deleteNPC") == 0)
+			{
+				UUID ghostID = UUID.fromString(messageTokens[2]);
+				game.deleteGhostNPC(ghostID);
 			}
 		}
 	}
