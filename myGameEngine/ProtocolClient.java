@@ -76,7 +76,7 @@ public class ProtocolClient extends GameConnectionClient
 						Float.parseFloat(messageTokens[4]),
 						Float.parseFloat(messageTokens[5]),
 						Float.parseFloat(messageTokens[6]));
-					addGhostNPC(ghostID, pos);
+					createGhostNPC(ghostID, pos);
 				}
 				else if (messageTokens[1].compareTo("requestingInfo") == 0)
 				{
