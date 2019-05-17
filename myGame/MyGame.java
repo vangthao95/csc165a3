@@ -276,6 +276,7 @@ public class MyGame extends VariableFrameRateGame {
 		ghostAva.setLocalPosition(pos);
 		//avatar1.translate(0.0f,2.0f,0.0f);
 		ghostAva.scale(0.1f,0.1f,0.1f);
+		//ghostSE.loadAnimation("throwAnimation", "throwing.rka")
 		return ghostAva;
 		
 		
@@ -1404,6 +1405,11 @@ public class MyGame extends VariableFrameRateGame {
 	public void deleteGhostNPC(UUID id)
 	{
 		npcController.deleteNPC(id);
+	}
+	
+	public void deleteGhostNPC2(UUID id)
+	{
+		npcController.deleteNPC_ForNonControllers(id);
 	}
 	
 	public void destroyNPCObjects(SceneNode n)

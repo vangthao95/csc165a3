@@ -45,6 +45,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			{
 				try 
 				{
+					clientsReplies.clear();
 					System.out.println("Send status check message on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
 					sendStatusCheckToAll(); // Send status check message to all clients
 					Thread.sleep(1000);
@@ -392,10 +393,6 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 	{
 		try
 		{
-			if (clientsReplies.isEmpty() == false)			
-			{
-				clientsReplies.clear();
-			}
 			String message = new String("statusCheck");
 			sendPacketToAll(message);
 		}

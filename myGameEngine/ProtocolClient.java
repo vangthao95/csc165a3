@@ -522,7 +522,7 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		try
 		{
-			String message = new String("bulletCollisionRequestDeleteNPC," + id.toString());
+			String message = new String("deleteNPC," + id.toString());
 			message += "," + ghostID.toString();
 			sendPacket(message);
 		}
@@ -536,7 +536,7 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		try 
 		{
-			String message = new String("requestDeleteNPC," + id.toString());
+			String message = new String("bulletCollisionRequestDeleteNPC," + id.toString());
 			message += "," + ghostID.toString();
 			sendPacket(message);
 		}
