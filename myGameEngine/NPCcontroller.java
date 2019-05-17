@@ -35,6 +35,22 @@ public class NPCcontroller
 		lastUpdate = 0.0f;
 	}
 	
+	public void deleteNPC(UUID id)
+	{
+		for (GhostNPC npc : npcList)
+		{
+			UUID npcID = npc.getID();
+			if (id.toString().compareTo(npcID.toString()) == 0)
+			{
+				SceneNode n = npc.getNode();
+				npcList.remove(npc);
+				game.destroyNPCObjects(n);
+				return;
+			}
+		}
+		System.out.println("NPC to delete is not found within the list of NPCs");
+	}
+	
 	public void update(float elapsedTime)
 	{
 		float dt = elapsedTime - lastUpdate;

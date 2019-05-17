@@ -66,7 +66,8 @@ import ray.physics.PhysicsEngineFactory;
 
 import java.util.UUID;
 import java.util.Iterator;
-import ray.rage.rendersystem.states.TextureState.WrapMode;
+import java.util.Vector;
+import java.util.HashSet;
 public class MyGame extends VariableFrameRateGame {
 	SkeletalEntity manSE;
 	
@@ -89,6 +90,7 @@ public class MyGame extends VariableFrameRateGame {
 	private final static String GROUND_E = "Ground";
 	private final static String GROUND_N = "GroundNode";
 	private boolean grenadeExist = false;
+	private Vector<Bullet> bullets = new Vector<Bullet>();
 	// End of Physics variables
 	
 	// Script files
@@ -447,11 +449,11 @@ public class MyGame extends VariableFrameRateGame {
 		ufo = sm.getRootSceneNode().createChildSceneNode(ufoE.getName() + "Node");
         ufoE.setPrimitive(Primitive.TRIANGLES);
 		ufo.attachObject(ufoE);
-		ufo.moveUp(1.2f);
-		ufo.moveForward(2.0f);
+		ufo.moveUp(1.5f);
+		ufo.moveForward(5.0f);
 		ufo.scale(0.2f, 0.2f, 0.2f);
 		
-		Light ufoLight = sm.createLight("ufoLight", Light.Type.SPOT);
+		Light ufoLight = sm.createLight("ufoLight", Light.Type.POINT);
         ufoLight.setAmbient(new Color(.5f, .5f, .5f));
         ufoLight.setDiffuse(java.awt.Color.RED);
 		ufoLight.setSpecular(java.awt.Color.BLUE);
@@ -506,6 +508,7 @@ public class MyGame extends VariableFrameRateGame {
 		sunLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
         sunLight.setRange(10f);
 		sunLight.setConstantAttenuation(.75f);
+		sunLight.setDiffuse(java.awt.Color.BLUE);
 		
 		SceneNode sunLightNode = avatar1.createChildSceneNode("sunLightNode");
         sunLightNode.attachObject(sunLight);
@@ -785,7 +788,7 @@ public class MyGame extends VariableFrameRateGame {
 	
 	
 	
-	
+	private boolean checkForSinglePlayerDone = false;
 	@Override
     protected void update(Engine engine) {
 		elapsTime += engine.getElapsedTimeMillis();
@@ -795,6 +798,12 @@ public class MyGame extends VariableFrameRateGame {
 			npcController.update(elapsTime);
 		}
 		processNetworking(elapsTime);
+		if (checkForSinglePlayerDone == false && isClientConnected == false)
+		{
+			System.out.println("Unable to join server, reverting to single player mode.");
+			controller = true;
+			checkForSinglePlayerDone = true;
+		}
 		orbitController1.updateCameraPosition();
 		//orbitController2.updateCameraPosition();
 		rs = (GL4RenderSystem) engine.getRenderSystem();
@@ -818,7 +827,11 @@ public class MyGame extends VariableFrameRateGame {
 				deleteGrenade();
 			}
 		}
-
+		/*if (bulletN != null)
+		{
+			Vector3 pos = bulletN.getLocalPosition();
+			System.out.println("Bullet position x: " + pos.x() + " y: " + pos.y() + " z: " + pos.z());
+		}*/
 		if (running)
 		{
 			Matrix4 mat;
@@ -840,21 +853,106 @@ public class MyGame extends VariableFrameRateGame {
 			//SceneNode avatarN = sm.getSceneNode("manAvNode");
 			manSE.update();
 		}
-		
+		if (bullets.size() > 0)
+		{
+			checkCollisionForBullets();
+			for (Bullet b : bullets)
+			{
+				if (b.getAliveTime() > 3000)
+				{
+					deleteBullet(b);
+				}
+				else 
+				{
+					b.addAlive(engine.getElapsedTimeMillis());
+				}
+			}
+		}
 		setEarParameters(sm);
 		
 		// End of physics
 	} // End of update()
-	
-	int counterBullets = 0;
+
+	void checkCollisionForBullets()
+	{
+		HashSet<UUID> npcToDelete = new HashSet<UUID>();
+		for (Bullet b : bullets)
+		{
+			SceneNode bulletN = b.getNode();
+			Iterator iter = npcController.getIterator();
+			while (iter.hasNext())
+			{
+				GhostNPC npc = (GhostNPC) iter.next();
+				boolean collided = checkCollision(bulletN, npc.getNode());
+				if (collided)
+				{
+					npcToDelete.add(npc.getID());
+				}
+			}
+		}
+		
+		Iterator iter = npcToDelete.iterator();
+		while (iter.hasNext())
+		{
+			UUID npcID = (UUID) iter.next();
+			npcController.deleteNPC(npcID);
+		}
+		
+	}
+
+	class Bullet
+	{
+		public SceneNode bulletN = null;
+		public Entity bulletE = null;
+		public UUID id = null;
+		public float timeAlive;
+		
+		public Bullet(SceneNode n, Entity e, UUID id)
+		{
+			bulletN = n;
+			bulletE = e;
+			this.id = id;
+			timeAlive = 0.0f;
+		}
+		
+		public SceneNode getNode()
+		{
+			return bulletN;
+		}
+		
+		public Entity getEntity()
+		{
+			return bulletE;
+		}
+		
+		public UUID getID()
+		{
+			return id;
+		}
+		
+		public void addAlive(float dt)
+		{
+			timeAlive += dt;
+		}
+		
+		public float getAliveTime()
+		{
+			return timeAlive;
+		}
+	}
+
 	public void shoot() throws IOException
 	{
+		if (bullets.size() == 3)
+			return;
+		
 		manSE.stopAnimation();
 		manSE.playAnimation("throwAnimation", 5.0f, STOP, 0);
 		
 		SceneNode rootNode = sceneManager.getRootSceneNode();
-		Entity bulletE = sceneManager.createEntity("grenade1E" + counterBullets, "sphere.obj");
-		SceneNode bulletN = rootNode.createChildSceneNode("grenade1N" + counterBullets);
+		UUID id = UUID.randomUUID();
+		Entity bulletE = sceneManager.createEntity("bulletE" + id.toString(), "sphere.obj");
+		SceneNode bulletN = rootNode.createChildSceneNode("bulletN" + id.toString());
 		bulletN.attachObject(bulletE);
 		bulletN.scale(0.1f, 0.1f, 0.1f);
 		Vector3 loc = avatar1.getLocalPosition();
@@ -872,10 +970,13 @@ public class MyGame extends VariableFrameRateGame {
 		Vector3 frontVector = frontV.normalize();
 		Vector3 currVector = bulletN.getLocalPosition();
 		
+		
 		//System.out.println("X: " + frontVector.x() + "Y: " + frontVector.y() + "Z: " + frontVector.z());
 		bulletPhysics.applyForce(frontVector.x() * 500.0f, 0.0f, frontVector.z() * 500.0f, currVector.x(), 0.0f, currVector.z());
 		//System.out.println("Grenade: " + bulletPhysics.getFriction());
-		counterBullets++;
+		Bullet newBullet = new Bullet(bulletN, bulletE, id);
+		bullets.add(newBullet);
+		
 	}
 	
 	public void throwGrenade() throws IOException
@@ -915,6 +1016,16 @@ public class MyGame extends VariableFrameRateGame {
 		sceneManager.destroyEntity("grenade1E");
 		sceneManager.destroySceneNode("grenade1N");
 		grenadeExist = false;
+	}
+	
+	public void deleteBullet(Bullet bullet)
+	{
+		Bullet b = bullet;
+		bullets.remove(bullet);
+		SceneNode bulletN = b.getNode();
+		Entity bulletE = b.getEntity();
+		sceneManager.destroyEntity(bulletE);
+		sceneManager.destroySceneNode(bulletN);
 	}
 	
 	public void updateVerticalPosition()
@@ -1115,6 +1226,22 @@ public class MyGame extends VariableFrameRateGame {
 	public void createNPC(UUID id, Vector3 pos)
 	{
 		npcController.createNPC(id, pos);
+	}
+	
+	public boolean checkCollision(SceneNode obj1, SceneNode obj2)
+	{
+		Vector3 pos1 = obj1.getLocalPosition();
+		Vector3 pos2 = obj2.getLocalPosition();
+		Vector3 distVector = Vector3f.createFrom(pos2.x() - pos1.x(), pos2.y() - pos1.y(), pos2.z() - pos1.z());
+		float dist = distVector.length();
+		if (dist < 0.1f)
+			return true;
+		else return false;
+	}
+	
+	public void destroyNPCObjects(SceneNode n)
+	{
+		sceneManager.destroySceneNode(n);
 	}
 }
 
