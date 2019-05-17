@@ -117,8 +117,9 @@ public class MyGame extends VariableFrameRateGame {
 	StretchController player1controller;
 	CustomController player2controller;
 	GL4RenderSystem rs;
-	private float elapsTime = 0.0f;
-	private int counter, score = 0;
+	float elapsTime = 0.0f;
+	String elapsTimeStr, counterStr, dispStr;
+	int elapsTimeSec, counter = 0;
 	private Camera camera;
 	private SceneNode avatar1, object1, object2, ufo;
 	private SceneNode cameraN1;
@@ -827,11 +828,7 @@ public class MyGame extends VariableFrameRateGame {
 				deleteGrenade();
 			}
 		}
-		/*if (bulletN != null)
-		{
-			Vector3 pos = bulletN.getLocalPosition();
-			System.out.println("Bullet position x: " + pos.x() + " y: " + pos.y() + " z: " + pos.z());
-		}*/
+
 		if (running)
 		{
 			Matrix4 mat;
@@ -856,21 +853,45 @@ public class MyGame extends VariableFrameRateGame {
 		if (bullets.size() > 0)
 		{
 			checkCollisionForBullets();
+			Vector<Bullet> toDelete = new Vector<Bullet>();
 			for (Bullet b : bullets)
 			{
 				if (b.getAliveTime() > 3000)
 				{
-					deleteBullet(b);
+					toDelete.add(b);
 				}
 				else 
 				{
 					b.addAlive(engine.getElapsedTimeMillis());
 				}
 			}
+			
+			while (toDelete.isEmpty() == false)
+			{
+				Bullet delete = toDelete.firstElement();
+				toDelete.remove(delete);
+				deleteBullet(delete);
+			}
 		}
 		setEarParameters(sm);
 		
 		// End of physics
+		
+		//HUD infomation
+		elapsTime += engine.getElapsedTimeMillis();
+		elapsTimeSec = Math.round(elapsTime/1000.0f);
+		elapsTimeStr = Integer.toString(elapsTimeSec);
+		counterStr = Integer.toString(counter);
+		int bulletCount = bulletCount();
+		
+		dispStr = "Time = " + elapsTimeStr + "   Score = " + counterStr + " Bullet Count:" + bulletCount;
+		rs.setHUD(dispStr, 15, 15);
+		
+		if (counter >= 20 )
+		{
+			dispStr = "YOU WIN!!!";
+			rs.setHUD(dispStr, 15, 15);
+		}
 	} // End of update()
 
 	void checkCollisionForBullets()
@@ -886,7 +907,9 @@ public class MyGame extends VariableFrameRateGame {
 				boolean collided = checkCollision(bulletN, npc.getNode());
 				if (collided)
 				{
+					System.out.println("COLLISION DETECTED");
 					npcToDelete.add(npc.getID());
+					counter++;
 				}
 			}
 		}
@@ -976,7 +999,7 @@ public class MyGame extends VariableFrameRateGame {
 		//System.out.println("Grenade: " + bulletPhysics.getFriction());
 		Bullet newBullet = new Bullet(bulletN, bulletE, id);
 		bullets.add(newBullet);
-		
+		throwingSound.play();
 	}
 	
 	public void throwGrenade() throws IOException
@@ -1026,6 +1049,29 @@ public class MyGame extends VariableFrameRateGame {
 		Entity bulletE = b.getEntity();
 		sceneManager.destroyEntity(bulletE);
 		sceneManager.destroySceneNode(bulletN);
+	}
+	
+	public int bulletCount()
+	{
+		int bulletNumber = bullets.size();
+		if (bulletNumber == 0)
+		{
+			bulletNumber = 3;
+		}
+		else if (bulletNumber == 1)
+		{
+			bulletNumber = 2;
+		}
+		else if (bulletNumber == 2)
+		{
+			bulletNumber = 1;
+		}
+		else if (bulletNumber == 3)
+		{
+			bulletNumber = 0;
+		}
+		
+		return bulletNumber;
 	}
 	
 	public void updateVerticalPosition()
@@ -1234,9 +1280,14 @@ public class MyGame extends VariableFrameRateGame {
 		Vector3 pos2 = obj2.getLocalPosition();
 		Vector3 distVector = Vector3f.createFrom(pos2.x() - pos1.x(), pos2.y() - pos1.y(), pos2.z() - pos1.z());
 		float dist = distVector.length();
-		if (dist < 0.1f)
+		if (dist < 0.75f)
 			return true;
 		else return false;
+	}
+	
+	public void deleteGhostNPC(UUID id)
+	{
+		npcController.deleteNPC(id);
 	}
 	
 	public void destroyNPCObjects(SceneNode n)

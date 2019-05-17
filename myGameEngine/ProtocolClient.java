@@ -71,6 +71,12 @@ public class ProtocolClient extends GameConnectionClient
 				else if (messageTokens[1].compareTo("createNPC") == 0)
 				{
 					System.out.println("A NPC has been created");
+					UUID ghostID = UUID.fromString(messageTokens[3]);
+					Vector3 pos = Vector3f.createFrom(
+						Float.parseFloat(messageTokens[4]),
+						Float.parseFloat(messageTokens[5]),
+						Float.parseFloat(messageTokens[6]));
+					addGhostNPC(ghostID, pos);
 				}
 				else if (messageTokens[1].compareTo("requestingInfo") == 0)
 				{
@@ -83,6 +89,12 @@ public class ProtocolClient extends GameConnectionClient
 					processGhostInfoReply(messageTokens);
 				}
 			}
+			else if (messageTokens[0].compareTo("deleteNPC") == 0)
+			{
+				UUID ghostID = UUID.fromString(messageTokens[2]);
+				game.deleteGhostNPC(ghostID);
+			}
+			
 			else if(messageTokens[0].compareTo("join") == 0) // receive join
 			{ // format: join,success or join,failure
 				if(messageTokens[1].compareTo("success") == 0)
@@ -139,15 +151,6 @@ public class ProtocolClient extends GameConnectionClient
 			{ // format: statusCheck
 				System.out.println("Status check received from server... sending reply...");
 				sendStatusReply();
-			}
-			else if (messageTokens[0].compareTo("createNPC") == 0)
-			{
-				UUID GhostNPCID = UUID.fromString(messageTokens[1]);
-				Vector3 pos = Vector3f.createFrom(
-					Float.parseFloat(messageTokens[2]),
-					Float.parseFloat(messageTokens[3]),
-					Float.parseFloat(messageTokens[4]));
-				createGhostNPC(GhostNPCID, pos);
 			}
 		}
 	}
@@ -331,13 +334,14 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	
-	public void addGhostNPC(Vector3 pos)
+	public void addGhostNPC(UUID ghostID, Vector3 pos)
 	{
 		try
 		{
 			String message = new String("NPC,");
 			message += "createNPC,";
 			message += id.toString() + ",";
+			message += ghostID.toString() + ",";
 			message += pos.x() + "," + pos.y() + "," + pos.z();
 			sendPacket(message);
 		}
@@ -483,6 +487,20 @@ public class ProtocolClient extends GameConnectionClient
 					return;
 				}
 			}
+		}
+	}
+	
+	public void sendDeleteMsg(UUID ghostID)
+	{
+		try
+		{
+			String message = new String("deleteNPC," + id.toString());
+			message += "," + ghostID.toString();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 }

@@ -129,9 +129,24 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 					}
 				}
 			}
+			
+			else if (msgTokens[0].compareTo("deleteNPC") == 0)
+			{
+				try
+				{
+					UUID id = UUID.fromString(msgTokens[1]);
+					forwardPacketToAll(message, id);
+					npcCount--;
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			
 			// case where server receives a JOIN message
 			// format: join,localid
-			if(msgTokens[0].compareTo("join") == 0)
+			else if(msgTokens[0].compareTo("join") == 0)
 			{
 				try
 				{

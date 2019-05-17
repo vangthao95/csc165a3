@@ -134,7 +134,7 @@ public class NPCcontroller
 		BehaviorTree bt = createBT(newNPC);
 		newNPC.setBT(bt);
 		npcList.add(newNPC);
-		protClient.addGhostNPC(pos);// Send create message to protocol client
+		protClient.addGhostNPC(newNPCid, pos);// Send create message to protocol client
 	}
 	
 	public void createNPC(UUID id, Vector3 pos)
