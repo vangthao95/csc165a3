@@ -93,7 +93,31 @@ public class ProtocolClient extends GameConnectionClient
 			{ // format: statusCheck
 				System.out.println("Status check received from server... sending reply...");
 				sendStatusReply();
-			}			
+			}
+			else if (messageTokens[0].compareTo("bulletCreate") == 0)
+			{
+				UUID playerID = UUID.fromString(messageTokens[1]);
+				UUID bulletID = UUID.fromString(messageTokens[2]);
+				Vector3 pos = Vector3f.createFrom(
+					Float.parseFloat(messageTokens[3]),
+					Float.parseFloat(messageTokens[4]),
+					Float.parseFloat(messageTokens[5]));
+				Vector3 frontVector = Vector3f.createFrom(
+					Float.parseFloat(messageTokens[6]),
+					Float.parseFloat(messageTokens[7]),
+					Float.parseFloat(messageTokens[8]));
+				Vector3 currVector = Vector3f.createFrom(
+					Float.parseFloat(messageTokens[9]),
+					Float.parseFloat(messageTokens[10]),
+					Float.parseFloat(messageTokens[11]));
+				processShootMessage(playerID, bulletID, pos, frontVector, currVector);
+			}
+			else if (messageTokens[0].compareTo("bulletDelete") == 0)
+			{
+				UUID playerID = UUID.fromString(messageTokens[1]);
+				UUID bulletID = UUID.fromString(messageTokens[2]);
+				processBulletDelete(playerID, bulletID);
+			}
 			else if(messageTokens[0].compareTo("join") == 0) // receive join
 			{ // format: join,success or join,failure
 				if(messageTokens[1].compareTo("success") == 0)
@@ -150,6 +174,11 @@ public class ProtocolClient extends GameConnectionClient
 			{
 				UUID ghostID = UUID.fromString(messageTokens[2]);
 				game.deleteGhostNPC(ghostID);
+			}
+			else if (messageTokens[0].compareTo("bulletCollisionRequestDeleteNPC") == 0)
+			{
+				UUID ghostID = UUID.fromString(messageTokens[2]);
+				processGhostNPCDeleteRequest(ghostID);
 			}
 		}
 	}
@@ -493,7 +522,7 @@ public class ProtocolClient extends GameConnectionClient
 	{
 		try
 		{
-			String message = new String("deleteNPC," + id.toString());
+			String message = new String("bulletCollisionRequestDeleteNPC," + id.toString());
 			message += "," + ghostID.toString();
 			sendPacket(message);
 		}
@@ -501,5 +530,72 @@ public class ProtocolClient extends GameConnectionClient
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void bulletCollisionRequestDelete(UUID ghostID)
+	{
+		try 
+		{
+			String message = new String("requestDeleteNPC," + id.toString());
+			message += "," + ghostID.toString();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void processGhostNPCDeleteRequest(UUID ghostID)
+	{
+		game.deleteGhostNPC(ghostID);
+	}
+	
+	public void sendShootMessage(UUID bulletID, Vector3 pos, Vector3 frontVector, Vector3 currVector)
+	{
+		try
+		{
+			String message = new String("bulletCreate," + id.toString());
+			message += "," + bulletID.toString();
+			message += "," + pos.x() + "," + pos.y() + "," + pos.z();
+			message += "," + frontVector.x() + "," + frontVector.y() + "," + frontVector.z();
+			message += "," + currVector.x() + "," + currVector.y() + "," + currVector.z();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void processShootMessage(UUID playerID, UUID bulletID, Vector3 pos, Vector3 frontVector, Vector3 currVector)
+	{
+		try
+		{
+			game.ghostShoot(playerID, bulletID, pos, frontVector, currVector);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void timeoutRemoveBullet(UUID bulletID)
+	{
+		try
+		{
+			String message = new String("bulletDelete," + id.toString());
+			message += "," + bulletID.toString();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void processBulletDelete(UUID playerID, UUID bulletID)
+	{
+		game.ghostBulletDelete(playerID, bulletID);
 	}
 }

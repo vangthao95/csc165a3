@@ -198,6 +198,30 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				System.out.println(clientID.toString() + " moved to x: " + pos[0] + " y: " + pos[1] + " z: " + pos[2]);
 				sendMoveMessages(clientID, pos);
 			}
+			else if (msgTokens[0].compareTo("bulletCreate") == 0)
+			{
+				try
+				{
+					UUID clientID = UUID.fromString(msgTokens[1]);
+					forwardPacketToAll(message, clientID);
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			else if (msgTokens[0].compareTo("bulletDelete") == 0)
+			{
+				try
+				{
+					UUID clientID = UUID.fromString(msgTokens[1]);
+					forwardPacketToAll(message,clientID);
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
 			// format: rotate,localId,rot,x,y,z
 			else if (msgTokens[0].compareTo("rotate") == 0)
 			{
@@ -234,6 +258,17 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				sendCreateNPCMessages(clientID, pos);
+			}
+			else if (msgTokens[0].compareTo("bulletCollisionRequestDeleteNPC") == 0)
+			{
+				try
+				{
+					sendPacket(message, Client_Handling_NPC);
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
 			}
 		}
 	}

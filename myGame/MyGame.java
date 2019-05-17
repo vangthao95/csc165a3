@@ -68,6 +68,7 @@ import java.util.UUID;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 public class MyGame extends VariableFrameRateGame {
 	SkeletalEntity manSE;
 	
@@ -91,6 +92,7 @@ public class MyGame extends VariableFrameRateGame {
 	private final static String GROUND_N = "GroundNode";
 	private boolean grenadeExist = false;
 	private Vector<Bullet> bullets = new Vector<Bullet>();
+	private ConcurrentHashMap<UUID, Vector<Bullet>> ghostBulletList = new ConcurrentHashMap<UUID, Vector<Bullet>>();
 	// End of Physics variables
 	
 	// Script files
@@ -121,7 +123,7 @@ public class MyGame extends VariableFrameRateGame {
 	String elapsTimeStr, counterStr, dispStr;
 	int elapsTimeSec, counter = 0;
 	private Camera camera;
-	private SceneNode avatar1, object1, object2, ufo;
+	private SceneNode avatar1, object1, object2, ufo, ufo2;
 	private SceneNode cameraN1;
 	// skybox
 	private static final String SKYBOX_NAME = "MySkyBox";
@@ -462,6 +464,29 @@ public class MyGame extends VariableFrameRateGame {
         ufoLight.setConstantAttenuation(.0005f);
 		SceneNode ufoLightNode = ufo.createChildSceneNode("ufoLightNode");
         ufoLightNode.attachObject(ufoLight);
+		
+		Entity ufo2E = sm.createEntity("ufo2", "untitled.obj");
+        ufo2 = sm.getRootSceneNode().createChildSceneNode(ufo2E.getName() + "Node");
+        ufo2E.setPrimitive(Primitive.TRIANGLES);
+        ufo2.attachObject(ufo2E);
+        ufo2.moveUp(1.5f);
+        ufo2.moveBackward(5.0f);
+        ufo2.scale(0.2f, 0.2f, 0.2f);
+
+        Light ufo2Light = sm.createLight("ufo2Light", Light.Type.POINT);
+        ufo2Light.setAmbient(new Color(.5f, .5f, .5f));
+        ufo2Light.setDiffuse(java.awt.Color.RED);
+        ufo2Light.setSpecular(java.awt.Color.BLUE);
+        ufo2Light.setRange(4f);
+        ufo2Light.setConstantAttenuation(.0005f);
+        SceneNode ufo2LightNode = ufo2.createChildSceneNode("ufo2LightNode");
+        ufo2LightNode.attachObject(ufo2Light);
+
+        RotationController rc = new RotationController(Vector3f.createUnitVectorY(), .02f);
+
+        rc.addNode(ufo);
+        rc.addNode(ufo2);
+        sm.addController(rc);
 	}
 	
 	private void initSkyBox(Engine eng, SceneManager sm) throws IOException
@@ -852,7 +877,18 @@ public class MyGame extends VariableFrameRateGame {
 		}
 		if (bullets.size() > 0)
 		{
-			checkCollisionForBullets();
+			// This option deletes the ghost npc directly.
+			// Noncontroller should not have
+			// the option to delete the ghosts directly
+			// so split it up into two checks for noncontrollers.
+			if (controller)
+			{
+				checkCollisionForBullets();
+			}
+			else
+			{
+				checkCollisionForBullets();
+			}
 			Vector<Bullet> toDelete = new Vector<Bullet>();
 			for (Bullet b : bullets)
 			{
@@ -863,12 +899,13 @@ public class MyGame extends VariableFrameRateGame {
 				else 
 				{
 					b.addAlive(engine.getElapsedTimeMillis());
-				}
 			}
-			
+			}
+
 			while (toDelete.isEmpty() == false)
 			{
 				Bullet delete = toDelete.firstElement();
+				protClient.timeoutRemoveBullet(delete.getID());
 				toDelete.remove(delete);
 				deleteBullet(delete);
 			}
@@ -919,6 +956,35 @@ public class MyGame extends VariableFrameRateGame {
 		{
 			UUID npcID = (UUID) iter.next();
 			npcController.deleteNPC(npcID);
+		}
+		
+	}
+	
+	void checkCollisionForBullets_ForNonControllers()
+	{
+		HashSet<UUID> npcToRequestDelete = new HashSet<UUID>();
+		for (Bullet b : bullets)
+		{
+			SceneNode bulletN = b.getNode();
+			Iterator iter = npcController.getIterator();
+			while (iter.hasNext())
+			{
+				GhostNPC npc = (GhostNPC) iter.next();
+				boolean collided = checkCollision(bulletN, npc.getNode());
+				if (collided)
+				{
+					System.out.println("COLLISION DETECTED");
+					npcToRequestDelete.add(npc.getID());
+					counter++;
+				}
+			}
+		}
+		
+		Iterator iter = npcToRequestDelete.iterator();
+		while (iter.hasNext())
+		{
+			UUID npcID = (UUID) iter.next();
+			protClient.bulletCollisionRequestDelete(npcID);
 		}
 		
 	}
@@ -981,7 +1047,6 @@ public class MyGame extends VariableFrameRateGame {
 		Vector3 loc = avatar1.getLocalPosition();
 		bulletN.setLocalPosition(loc.x(), loc.y()+0.3f, loc.z());
 		float mass = 1.0f;
-		float up[] = {0,1,0};
 		double[] temptf;
 		temptf = toDoubleArray(bulletN.getLocalTransform().toFloatArray());
 		PhysicsObject bulletPhysics = physicsEng.addSphereObject(physicsEng.nextUID(),
@@ -999,9 +1064,60 @@ public class MyGame extends VariableFrameRateGame {
 		//System.out.println("Grenade: " + bulletPhysics.getFriction());
 		Bullet newBullet = new Bullet(bulletN, bulletE, id);
 		bullets.add(newBullet);
+		protClient.sendShootMessage(id, loc, frontVector, currVector);
 		throwingSound.play();
 	}
 	
+	public void ghostShoot(UUID player, UUID bullet, Vector3 pos, Vector3 frontVector, Vector3 currVector) throws IOException
+	{
+		SceneNode rootNode = sceneManager.getRootSceneNode();
+		Entity bulletE = sceneManager.createEntity("gBE" + bullet.toString(), "sphere.obj");
+		SceneNode bulletN = rootNode.createChildSceneNode("gBN" + bullet.toString());
+		bulletN.attachObject(bulletE);
+		bulletN.scale(0.1f, 0.1f, 0.1f);
+		bulletN.setLocalPosition(pos.x(), pos.y()+0.3f, pos.z());
+		float mass = 1.0f;
+		double[] temptf;
+		temptf = toDoubleArray(bulletN.getLocalTransform().toFloatArray());
+		PhysicsObject bulletPhysics = physicsEng.addSphereObject(physicsEng.nextUID(),
+			mass, temptf, 0.3f);
+		bulletPhysics.setBounciness(0.5f);
+		bulletN.setPhysicsObject(bulletPhysics);
+
+		//System.out.println("X: " + frontVector.x() + "Y: " + frontVector.y() + "Z: " + frontVector.z());
+		bulletPhysics.applyForce(frontVector.x() * 500.0f, 0.0f, frontVector.z() * 500.0f, currVector.x(), 0.0f, currVector.z());
+		//System.out.println("Grenade: " + bulletPhysics.getFriction());
+		Bullet newBullet = new Bullet(bulletN, bulletE, bullet);
+		Vector<Bullet> ghostVectorBulletList = ghostBulletList.get(player);
+		if (ghostVectorBulletList == null)
+		{
+			ghostVectorBulletList = new Vector<Bullet>();
+			ghostVectorBulletList.add(newBullet);
+			ghostBulletList.put(player, ghostVectorBulletList);
+		}
+		else
+		{
+			ghostVectorBulletList.add(newBullet);
+		}
+	}
+	
+	public void ghostBulletDelete(UUID playerID, UUID bulletID)
+	{
+		Vector<Bullet> ghostPlayerBullets = ghostBulletList.get(playerID);
+		Bullet delete = null;
+		for (Bullet b : ghostPlayerBullets)
+		{
+			UUID curBulletID = b.getID();
+			if (curBulletID.toString().compareTo(bulletID.toString()) == 0)
+			{
+				delete = b;
+				ghostPlayerBullets.remove(b);
+				break;
+			}
+		}
+		
+		deleteBullet(delete);
+	}
 	public void throwGrenade() throws IOException
 	{
 		manSE.stopAnimation();
