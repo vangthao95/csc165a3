@@ -13,11 +13,13 @@ import ray.ai.behaviortrees.*;
 
 public class NPCcontroller
 {
-	private float DISTANCE_TO_SPAWN = 20.0f; // distance to spawn npc away from player
+	private float DISTANCE_TO_SPAWN = 10.0f; // distance to spawn npc away from player
 	private Vector<GhostNPC> npcList;
 	private MyGame game;
 	private ProtocolClient protClient;
-	private float timeForNextUpdate;
+	private float timeSinceTick;
+	private float timeSinceThink;
+	private float lastUpdate;
 
 	private Vector<GhostNPC> nearbyP;
 	
@@ -28,11 +30,17 @@ public class NPCcontroller
 		protClient = c;
 		npcList = new Vector<GhostNPC>();
 		nearbyP = null;
-		timeForNextUpdate = 0.0f;
+		timeSinceTick = 0.0f;
+		timeSinceThink = 0.0f;
+		lastUpdate = 0.0f;
 	}
 	
 	public void update(float elapsedTime)
 	{
+		float dt = elapsedTime - lastUpdate;
+		timeSinceThink += dt;
+		timeSinceTick += dt;
+		
 		if (getCount() == 0)
 		{
 			createNPC();
@@ -40,15 +48,34 @@ public class NPCcontroller
 			createNPC();
 		}
 		
-		for (GhostNPC npc : npcList)
+		
+		if (timeSinceTick > 50.0f) // tick
 		{
-			npc.getBT().update(elapsedTime);
+			for (GhostNPC npc : npcList)
+			{
+				Vector3 pos = npc.getMoveTowards();
+				if (pos != null)
+				{
+					npc.getNode().moveForward(0.01f);
+				}
+				
+			}
+			timeSinceTick = 0.0f;
+		}
+		if (timeSinceThink > 500.0f) // think
+		{
+			for (GhostNPC npc : npcList)
+			{
+				npc.getBT().update(elapsedTime);
+			}
+			timeSinceThink = 0.0f;
 		}
 		/*
 		for (int i=0; i<numNPCs; i++)
 		{
 			NPClist[i].updateLocation();
 		}*/
+		lastUpdate = elapsedTime;
 	}
 	
 	public BehaviorTree createBT(GhostNPC npc)
@@ -170,7 +197,7 @@ public class NPCcontroller
 		ProtocolClient protClient;
 		NPCcontroller npcC;
 		GhostNPC curNPC;
-		private float DISTANCE_TO_PLAYER = 10f;
+		private float DISTANCE_TO_PLAYER = 3f;
 		
 		public playerNearBy(ProtocolClient c, NPCcontroller npcC, GhostNPC npc, boolean toNegate)
 		{

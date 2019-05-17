@@ -18,6 +18,7 @@ public class GhostNPC
 	{
 		this.id = id;
 		this.node = node;
+		towardsLoc = null;
 	}
 	
 	public void setBT(BehaviorTree bt)
