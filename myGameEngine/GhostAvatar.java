@@ -40,6 +40,8 @@ public class GhostAvatar
 		node = newNode;
 	}
 
+
+
 	public void rotate(float rotation, Vector3 axisOfRotation)
 	{
 		Angle rotAmt = Degreef.createFrom(rotation);

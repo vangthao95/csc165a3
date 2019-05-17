@@ -47,6 +47,10 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				{
 					System.out.println("Send status check message on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
 					sendStatusCheckToAll(); // Send status check message to all clients
+					Thread.sleep(1000);
+					sendStatusCheckToAll();
+					Thread.sleep(1000);
+					sendStatusCheckToAll();
 					Thread.sleep(5000); // Wait 5 seconds for replies
 					removeClientsWithNoReply(); // Delete clients that didn't send a reply back
 					//System.out.println("Delete clients on: " + new Date() + " on Thread's name: " + Thread.currentThread().getName());
@@ -76,14 +80,24 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		{	
 			if ((msgTokens[0].compareTo("NPC") == 0) && (msgTokens[2].compareTo(Client_Handling_NPC.toString()) == 0))
 			{	
-				if (msgTokens[2].compareTo("moveNPC") == 0)
+				if (msgTokens[1].compareTo("move") == 0)
 				{
 					try
 					{
-						System.out.println("Forwarding NPC move message");
 						forwardPacketToAll(message, UUID.fromString(msgTokens[2]));
 					}
 					catch (Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+				else if (msgTokens[1].compareTo("rotate") == 0)
+				{
+					try 
+					{
+						forwardPacketToAll(message, UUID.fromString(msgTokens[2]));
+					}
+					catch (IOException e)
 					{
 						e.printStackTrace();
 					}
@@ -197,7 +211,8 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 			else if (msgTokens[0].compareTo("statusReply") == 0)
 			{
 				UUID clientID = UUID.fromString(msgTokens[1]);
-				clientsReplies.add(clientID);
+				if (clientsReplies.contains(clientID) == false)
+					clientsReplies.add(clientID);
 			}
 			else if (msgTokens[0].compareTo("createNPC") == 0)
 			{

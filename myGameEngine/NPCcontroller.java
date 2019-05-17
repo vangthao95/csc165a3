@@ -9,13 +9,17 @@ import java.util.UUID;
 import java.lang.Math; 
 import java.io.IOException;
 import java.util.Iterator;
+import ray.ai.behaviortrees.*;
 
 public class NPCcontroller
 {
-	private float DISTANCE_TO_SPAWN = 10.0f; // distance to spawn npc away from player
+	private float DISTANCE_TO_SPAWN = 20.0f; // distance to spawn npc away from player
 	private Vector<GhostNPC> npcList;
 	private MyGame game;
 	private ProtocolClient protClient;
+	private float timeForNextUpdate;
+
+	private Vector<GhostNPC> nearbyP;
 	
 	
 	public NPCcontroller(MyGame g, ProtocolClient c)
@@ -23,13 +27,22 @@ public class NPCcontroller
 		game = g;
 		protClient = c;
 		npcList = new Vector<GhostNPC>();
+		nearbyP = null;
+		timeForNextUpdate = 0.0f;
 	}
 	
-	public void update()
+	public void update(float elapsedTime)
 	{
 		if (getCount() == 0)
 		{
 			createNPC();
+			createNPC();
+			createNPC();
+		}
+		
+		for (GhostNPC npc : npcList)
+		{
+			npc.getBT().update(elapsedTime);
 		}
 		/*
 		for (int i=0; i<numNPCs; i++)
@@ -38,13 +51,23 @@ public class NPCcontroller
 		}*/
 	}
 	
+	public BehaviorTree createBT(GhostNPC npc)
+	{
+		BehaviorTree bt = new BehaviorTree(BTCompositeType.SELECTOR);
+		bt.insertAtRoot(new BTSequence(10));
+		bt.insert(10, new playerNearBy(protClient,this,npc,false));
+		bt.insert(10, new turnsTowardPos(protClient, this, npc));
+		bt.insert(10, new walkTowardsPos(protClient, this, npc));
+		return bt;
+	}
+	
 	public void createNPC()
 	{
-		Random rand = new Random(System.currentTimeMillis());// Randomize position
+		Random rand = new Random();// Randomize position
 		Vector3 playerPos = game.getPlayerPosition();
 		UUID newNPCid = UUID.randomUUID();
-		float x = rand.nextFloat();
-		float z = rand.nextFloat();
+		float x = rand.nextFloat()* 2.0f - 1.0f;
+		float z = rand.nextFloat() * 2.0f - 1.0f;
 		
 		Vector3 dirVector = Vector3f.createFrom(x, 0.0f, z);
 		Vector3 dirUnitVector = dirVector.normalize();
@@ -63,8 +86,30 @@ public class NPCcontroller
 		}
 		
 		GhostNPC newNPC = new GhostNPC(npcNode, newNPCid);
+		BehaviorTree bt = createBT(newNPC);
+		newNPC.setBT(bt);
 		npcList.add(newNPC);
 		protClient.addGhostNPC(pos);// Send create message to protocol client
+	}
+	
+	public void createNPC(UUID id, Vector3 pos)
+	{
+		SceneNode npcNode = null;
+		try
+		{
+			npcNode = game.getNPCnode(pos, id);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		GhostNPC newNPC = new GhostNPC(npcNode, id);
+		npcList.add(newNPC);
+	}
+	
+	public Vector3 getPlayerPosition()
+	{
+		return game.getPlayerPosition();
 	}
 	
 	public int getCount()
@@ -76,4 +121,102 @@ public class NPCcontroller
 	{
 		return npcList.iterator();
 	}
+	
+	public class walkTowardsPos extends BTAction
+	{
+		ProtocolClient protClient;
+		NPCcontroller npcC;
+		GhostNPC curNPC;
+		
+		public walkTowardsPos(ProtocolClient c, NPCcontroller npcC, GhostNPC npc)
+		{
+			protClient = c;
+			this.npcC = npcC;
+			curNPC = npc;
+		}
+		
+		protected BTStatus update(float elapsedTime)
+		{
+			curNPC.getNode().moveForward(0.01f);
+			protClient.moveNPC(curNPC.getID(), curNPC.getPos());
+			
+			return BTStatus.BH_SUCCESS;
+		}
+	}
+	
+	public class turnsTowardPos extends BTAction
+	{
+		ProtocolClient protClient;
+		NPCcontroller npcC;
+		GhostNPC curNPC;
+		
+		public turnsTowardPos(ProtocolClient c, NPCcontroller npcC, GhostNPC npc)
+		{
+			protClient = c;
+			this.npcC = npcC;
+			curNPC = npc;
+		}
+		
+		protected BTStatus update(float elapsedTime)
+		{
+			curNPC.lookAt(curNPC.getMoveTowards(), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
+			protClient.rotateNPC(curNPC.getID(), curNPC.getMoveTowards());
+			return BTStatus.BH_SUCCESS;
+		}
+	}
+	
+	public class playerNearBy extends BTCondition
+	{
+		ProtocolClient protClient;
+		NPCcontroller npcC;
+		GhostNPC curNPC;
+		private float DISTANCE_TO_PLAYER = 10f;
+		
+		public playerNearBy(ProtocolClient c, NPCcontroller npcC, GhostNPC npc, boolean toNegate)
+		{
+			super(toNegate);
+			protClient = c;
+			this.npcC = npcC;
+			curNPC = npc;
+		}
+		
+		public void setDistance(float dist) // can adjust for difficulty
+		{
+			DISTANCE_TO_PLAYER = dist;
+		}
+		
+		protected boolean check()
+		{
+			Iterator ghostPlayers = protClient.getGhostIter();
+			Vector3 curPosNPC = curNPC.getPos();
+			float closestLength = 9999.0f;
+			boolean playerNear = false;
+			
+			while (ghostPlayers.hasNext())
+			{
+				GhostAvatar curP = (GhostAvatar) ghostPlayers.next();
+				Vector3 pPos = curP.getPos();
+				Vector3 dist = Vector3f.createFrom(pPos.x() - curPosNPC.x(), 0.0f, pPos.z() - curPosNPC.z()); 
+				float length = dist.length();
+				if (length > DISTANCE_TO_PLAYER+1) continue; 
+				else if (length < closestLength) // keep track of closest player
+				{
+					playerNear = true;
+					curNPC.setMoveTowards(pPos);
+				}
+			}
+			
+			Vector3 pos = npcC.getPlayerPosition();
+			Vector3 dist = Vector3f.createFrom(pos.x() - curPosNPC.x(), 0.0f, pos.z() - curPosNPC.z());
+			float length = dist.length();
+			if (length <= DISTANCE_TO_PLAYER && length < closestLength)
+			{
+				playerNear = true;
+				curNPC.setMoveTowards(pos);
+			}
+			
+			return playerNear;
+		}
+	}
+	
 }

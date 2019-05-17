@@ -67,6 +67,8 @@ import ray.physics.PhysicsEngineFactory;
 import java.util.UUID;
 import java.util.Iterator;
 public class MyGame extends VariableFrameRateGame {
+	SkeletalEntity manSE;
+	
 	// NPCs variables
 	private int uniqueGhostNPCs = 0;
 	private NPCcontroller npcController;
@@ -255,13 +257,29 @@ public class MyGame extends VariableFrameRateGame {
 	public SceneNode addGhostAvatarToGameWorld(Vector3 pos, UUID id)
 	throws IOException
 	{
-		Entity ghostE = sceneManager.createEntity("ghostE" + id.toString(), "avatar_v1.obj");
+		//animations
+		SkeletalEntity ghostSE = sceneManager.createSkeletalEntity("ghostSE" + id.toString(), "robot.rkm", "robot.rks");
+		Texture tex = sceneManager.getTextureManager().getAssetByPath("robot.png");
+		TextureState tstate = (TextureState) sceneManager.getRenderSystem()
+		.createRenderState(RenderState.Type.TEXTURE);
+		tstate.setTexture(tex);
+		ghostSE.setRenderState(tstate);
+		// attach the entity to a scene node
+		SceneNode ghostAva = sceneManager.getRootSceneNode().createChildSceneNode("ghostAva"+id.toString());
+		ghostAva.attachObject(ghostSE);
+		ghostAva.setLocalPosition(pos);
+		//avatar1.translate(0.0f,2.0f,0.0f);
+		ghostAva.scale(0.1f,0.1f,0.1f);
+		return ghostAva;
+		
+		
+		/*Entity ghostE = sceneManager.createEntity("ghostE" + id.toString(), "avatar_v1.obj");
 		ghostE.setPrimitive(Primitive.TRIANGLES);
 		SceneNode ghostN = sceneManager.getRootSceneNode().createChildSceneNode("ghostN" + id.toString());
 		ghostN.attachObject(ghostE);
 		ghostN.setLocalPosition(pos);
 		ghostN.scale(0.05f, 0.05f, 0.05f);
-		return ghostN;
+		return ghostN;*/
 	}
 	
 	public void removeGhostAvatar(GhostAvatar avatar)
@@ -312,8 +330,6 @@ public class MyGame extends VariableFrameRateGame {
 		}
 	}
 	*/
-
-	
 	
     @Override
     protected void setupScene(Engine eng, SceneManager sm) throws IOException
@@ -321,8 +337,7 @@ public class MyGame extends VariableFrameRateGame {
 		findScriptEngine();
 	
 		//animations
-		SkeletalEntity manSE =
-		sm.createSkeletalEntity("manAv", "robot.rkm", "robot.rks");
+		manSE = sm.createSkeletalEntity("manAv", "robot.rkm", "robot.rks");
 		Texture tex = sm.getTextureManager().getAssetByPath("robot.png");
 		TextureState tstate = (TextureState) sm.getRenderSystem()
 		.createRenderState(RenderState.Type.TEXTURE);
@@ -331,8 +346,9 @@ public class MyGame extends VariableFrameRateGame {
 		// attach the entity to a scene node
 		avatar1 = sm.getRootSceneNode().createChildSceneNode(manSE.getName()+"Node");
 		avatar1.attachObject(manSE);
-		avatar1.moveBackward(2.0f);
+		//avatar1.moveBackward(2.0f);
 		//avatar1.translate(0.0f,2.0f,0.0f);
+		avatar1.setLocalPosition(0.0f, 0.0f, 0.0f);
 		avatar1.scale(0.1f,0.1f,0.1f);
 		
 		
@@ -357,18 +373,19 @@ public class MyGame extends VariableFrameRateGame {
   */      
         object1 = sm.getRootSceneNode().createChildSceneNode(object1E.getName() + "Node");
         object1.moveForward(1.0f);
-        object1.attachObject(object1E);
+        //object1.attachObject(object1E);
 		object1.scale(0.05f, 0.05f, 0.05f);
 		// Add dolphin 2 to rotation controller
 		
 		
-		Entity object2E = sm.createEntity("object2", "dolphinHighPoly.obj");
-		object2 = sm.getRootSceneNode().createChildSceneNode(object2E.getName() + "Node");
-        object2E.setPrimitive(Primitive.TRIANGLES);
+		//Entity object2E = sm.createEntity("object2", "dolphinHighPoly.obj");
+		//object2 = sm.getRootSceneNode().createChildSceneNode(object2E.getName() + "Node");
+        //object2E.setPrimitive(Primitive.TRIANGLES);
 		//object2.attachObject(object2E);
-		object2.moveUp(.5f);
+		//object2.moveUp(.5f);
 
 		setupNetworking();
+		setupNPC();
 		setupInputs();
 		setupOrbitCamera(eng, sm);
 		
@@ -387,9 +404,13 @@ public class MyGame extends VariableFrameRateGame {
 		updateVerticalPosition();
 		
 		// Initial vertical update of monster
-		updateVerticalPos(object1);
+		//updateVerticalPos(object1);
 		initAudio(sm);
     }
+	public void setupNPC()
+	{
+		npcController = new NPCcontroller(this, protClient);
+	}
 	
 	private void findScriptEngine()
 	{
@@ -676,6 +697,12 @@ public class MyGame extends VariableFrameRateGame {
 					net.java.games.input.Component.Identifier.Key.D,
 					p1MoveRightA,
 					InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+					
+			/*im.associateAction(keyboard,
+					net.java.games.input.Component.Identifier.Key.Q,
+					quitGameAction,
+					InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);*/ // doesnt work
+					
 			
 		}
     	//im.associateAction(kbName,net.java.games.input.Component.Identifier.Key.ESCAPE,quitGameAction,InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
@@ -774,16 +801,17 @@ public class MyGame extends VariableFrameRateGame {
 	
 	@Override
     protected void update(Engine engine) {
+		elapsTime += engine.getElapsedTimeMillis();
 		im.update(elapsTime);
 		if (controller && npcController != null)
 		{
-			npcController.update();
+			npcController.update(elapsTime);
 		}
 		processNetworking(elapsTime);
 		orbitController1.updateCameraPosition();
 		//orbitController2.updateCameraPosition();
 		rs = (GL4RenderSystem) engine.getRenderSystem();
-		elapsTime += engine.getElapsedTimeMillis();
+		
 		
 		SceneManager sm = engine.getSceneManager();
 
@@ -842,10 +870,11 @@ public class MyGame extends VariableFrameRateGame {
 
 		
 		// update the animation
-		SkeletalEntity manSE =
-		(SkeletalEntity) sceneManager.getEntity("manAv");
-		//SceneNode avatarN = sm.getSceneNode("manAvNode");
-		manSE.update();
+		if (manSE != null)
+		{
+			//SceneNode avatarN = sm.getSceneNode("manAvNode");
+			manSE.update();
+		}
 		
 		setEarParameters(sm);
 		
@@ -855,7 +884,6 @@ public class MyGame extends VariableFrameRateGame {
 	int counterBullets = 0;
 	public void shoot() throws IOException
 	{
-		SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
 		manSE.stopAnimation();
 		manSE.playAnimation("throwAnimation", 5.0f, STOP, 0);
 		
@@ -887,8 +915,6 @@ public class MyGame extends VariableFrameRateGame {
 	
 	public void throwGrenade() throws IOException
 	{
-		
-		SkeletalEntity manSE =(SkeletalEntity) sceneManager.getEntity("manAv");
 		manSE.stopAnimation();
 		manSE.playAnimation("throwAnimation", 2.0f, STOP, 0);
 		
@@ -1100,8 +1126,6 @@ public class MyGame extends VariableFrameRateGame {
 	public void initializeNPCcontroller()
 	{
 		controller = true;
-		npcController = new NPCcontroller(this, protClient);
-		System.out.println("NPC controller initialized...");
 	}
 	
 	public SceneNode getNPCnode(Vector3 pos, UUID id) throws IOException
@@ -1121,6 +1145,11 @@ public class MyGame extends VariableFrameRateGame {
 			return npcController.getIterator();
 		System.out.println("Ghost NPC Iterator returned null");
 		return null;
+	}
+	
+	public void createNPC(UUID id, Vector3 pos)
+	{
+		npcController.createNPC(id, pos);
 	}
 }
 

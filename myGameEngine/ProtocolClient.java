@@ -18,7 +18,7 @@ public class ProtocolClient extends GameConnectionClient
 	private MyGame game; // Used to call functions like create ghost avatar
 	private UUID id; // Unique id for each player
 	private Vector<GhostAvatar> ghostAvatars; // Store ghost avatars of all other players
-	private Vector<GhostNPC> ghostNPCs; // Store NPCs
+	//private Vector<GhostNPC> ghostNPCs; // Store NPCs
 	private boolean handlingNPC;
 	
 	public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game)
@@ -28,13 +28,13 @@ public class ProtocolClient extends GameConnectionClient
 		this.game = game;
 		this.id = UUID.randomUUID();
 		this.ghostAvatars = new Vector<GhostAvatar>();
-		this.ghostNPCs = new Vector<GhostNPC>();
+		//this.ghostNPCs = new Vector<GhostNPC>();
 		handlingNPC = false;
 	}
 	
-	public void setController()
+	public Iterator getGhostIter()
 	{
-		
+		return ghostAvatars.iterator();
 	}
 	
 	@Override
@@ -53,14 +53,13 @@ public class ProtocolClient extends GameConnectionClient
 			// NPC stuff maybe
 			if (messageTokens[0].compareTo("NPC") == 0)
 			{
-				if (messageTokens[1].compareTo("moveNPC") == 0)
+				if (messageTokens[1].compareTo("move") == 0)
 				{
-					/*UUID npcID = UUID.fromString(messageTokens[2]);
-					float x = Float.parseFloat(messageTokens[3]);
-					float z = Float.parseFloat(messageTokens[5]);
-					float y = game.getVericalPosition(x, z);
-					Vector3 npcPos = Vector3f.createFrom(x, y, z);
-					updateNpcMoveGhostAvatars(npcID, npcPos);*/
+					
+				}
+				else if (messageTokens[1].compareTo("rotate") == 0)
+				{
+					
 				}
 				else if (messageTokens[1].compareTo("setAsClientHandlingNPC") == 0)
 				{
@@ -234,18 +233,6 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	
-	public void createGhostNPC(UUID GhostNPCID, Vector3 pos)
-	{
-		try
-		{
-			
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
 	public void sendWantRequestReply(String requestorId)
 	{ // format: (wantReply,localId,requestorId,x,y,z)
 		try
@@ -307,10 +294,6 @@ public class ProtocolClient extends GameConnectionClient
 		}
 	}
 	
-	public void updateNpcMoveGhostAvatars(UUID id, Vector3 pos)
-	{
-
-	}
 	
 	public void sendStatusReply()
 	{ // format: (statusReply,localId)
@@ -365,10 +348,10 @@ public class ProtocolClient extends GameConnectionClient
 		// Randomize a position away from player
 	}
 	
-	public int getNPCcount()
+	/*public int getNPCcount()
 	{
 		return ghostNPCs.size();
-	}
+	}*/
 	
 	public void sendNPCInfoReply(UUID requestorID)
 	{
@@ -413,7 +396,47 @@ public class ProtocolClient extends GameConnectionClient
 			float z = Float.parseFloat(messageTokens[i]);
 			i++;
 			Vector3 pos = Vector3f.createFrom(x, y, z);
-			System.out.println("Creating ghost with xyz: " + x + " " + y + " " + z);
+			game.createNPC(npcID, pos);
+		}
+	}
+	
+	public void createGhostNPC(UUID GhostNPCID, Vector3 pos)
+	{
+		try
+		{
+			game.createNPC(GhostNPCID, pos);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void rotateNPC(UUID npcID, Vector3 pos)
+	{
+		try
+		{
+			String message = new String("NPC,rotate," + id.toString() + npcID.toString());
+			message += "," + pos.x() + "," + pos.y() + "," + pos.z();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void moveNPC(UUID npcID, Vector3 pos)
+	{
+		try
+		{
+			String message = new String("NPC,move," + id.toString() + npcID.toString());
+			message += "," + pos.x() + "," + pos.y() + "," + pos.z();
+			sendPacket(message);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 }
