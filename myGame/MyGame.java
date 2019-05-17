@@ -405,9 +405,9 @@ public class MyGame extends VariableFrameRateGame {
 		initUFO(sm);
 		
 		// Physics
-		//initPhysicsExamples(sm);
-		//initPhysicsSystem();
-		//createRagePhysicsWorld();
+		initPhysicsExamples(sm);
+		initPhysicsSystem();
+		createRagePhysicsWorld();
 		
 		// Initial vertical update of player so
 		// player doesn't have to move to get above ground
