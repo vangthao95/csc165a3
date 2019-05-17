@@ -1302,7 +1302,7 @@ public class MyGame extends VariableFrameRateGame {
 					{
 						exception.printStackTrace();
 					}
-				
+				}
 				break;
 				
 				case KeyEvent.VK_T:
