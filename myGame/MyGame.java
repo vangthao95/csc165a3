@@ -887,7 +887,7 @@ public class MyGame extends VariableFrameRateGame {
 			}
 			else
 			{
-				checkCollisionForBullets();
+				checkCollisionForBullets_ForNonControllers();
 			}
 			Vector<Bullet> toDelete = new Vector<Bullet>();
 			for (Bullet b : bullets)
