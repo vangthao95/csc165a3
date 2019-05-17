@@ -13,6 +13,7 @@ public class GhostNPC
 	private SceneNode node;
 	private Vector3 towardsLoc;
 	private BehaviorTree bt;
+	private boolean touchPlayer = false;
 	
 	public GhostNPC(SceneNode node, UUID id) // constructor
 	{
@@ -75,6 +76,16 @@ public class GhostNPC
 	public SceneNode getNode()
 	{
 		return node;
+	}
+	
+	public void setTouchedPlayer()
+	{
+		touchPlayer = true;
+	}
+	
+	public boolean getTouchedPlayer()
+	{
+		return touchPlayer;
 	}
 
 }

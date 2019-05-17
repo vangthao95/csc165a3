@@ -238,7 +238,7 @@ public class NPCcontroller
 		ProtocolClient protClient;
 		NPCcontroller npcC;
 		GhostNPC curNPC;
-		private float DISTANCE_TO_PLAYER = 2f;
+		private float DISTANCE_TO_PLAYER = 3f;
 		
 		public playerNearBy(ProtocolClient c, NPCcontroller npcC, GhostNPC npc, boolean toNegate)
 		{
@@ -266,21 +266,29 @@ public class NPCcontroller
 				Vector3 pPos = curP.getPos();
 				Vector3 dist = Vector3f.createFrom(pPos.x() - curPosNPC.x(), 0.0f, pPos.z() - curPosNPC.z()); 
 				float length = dist.length();
-				if (length > DISTANCE_TO_PLAYER+1) continue; 
-				else if (length < closestLength) // keep track of closest player
+				if (length <= DISTANCE_TO_PLAYER && length < closestLength && length > 0.35f) // keep track of closest player
 				{
 					playerNear = true;
 					curNPC.setMoveTowards(pPos);
 				}
+				
 			}
 			
 			Vector3 pos = npcC.getPlayerPosition();
 			Vector3 dist = Vector3f.createFrom(pos.x() - curPosNPC.x(), 0.0f, pos.z() - curPosNPC.z());
 			float length = dist.length();
-			if (length <= DISTANCE_TO_PLAYER && length < closestLength)
+			if (length <= DISTANCE_TO_PLAYER && length < closestLength && length > 0.35f)
 			{
 				playerNear = true;
 				curNPC.setMoveTowards(pos);
+			}
+			else if (length <= 0.36f)
+			{
+				if (curNPC.getTouchedPlayer() == false)
+				{
+					game.decScore();
+					curNPC.setTouchedPlayer();
+				}
 			}
 			
 			if (playerNear == false)

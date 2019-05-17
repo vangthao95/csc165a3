@@ -173,7 +173,7 @@ public class ProtocolClient extends GameConnectionClient
 			else if (messageTokens[0].compareTo("deleteNPC") == 0)
 			{
 				UUID ghostID = UUID.fromString(messageTokens[2]);
-				game.deleteGhostNPC(ghostID);
+				game.deleteGhostNPC2(ghostID);
 			}
 			else if (messageTokens[0].compareTo("bulletCollisionRequestDeleteNPC") == 0)
 			{

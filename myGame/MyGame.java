@@ -77,7 +77,8 @@ public class MyGame extends VariableFrameRateGame {
 	private NPCcontroller npcController;
 	private boolean controller;
 	//
-	
+	private boolean lightOnOff = true;
+	Light sunLight;
 	
 	
 	// Physics variables
@@ -123,7 +124,7 @@ public class MyGame extends VariableFrameRateGame {
 	String elapsTimeStr, counterStr, dispStr;
 	int elapsTimeSec, counter = 0;
 	private Camera camera;
-	private SceneNode avatar1, object1, object2, ufo, ufo2;
+	private SceneNode avatar1, object1, object2, ufo, ufo2, ufo3, ufo4, ufo5;
 	private SceneNode cameraN1;
 	// skybox
 	private static final String SKYBOX_NAME = "MySkyBox";
@@ -385,11 +386,12 @@ public class MyGame extends VariableFrameRateGame {
 		// Add dolphin 2 to rotation controller
 		
 		
-		//Entity object2E = sm.createEntity("object2", "dolphinHighPoly.obj");
-		//object2 = sm.getRootSceneNode().createChildSceneNode(object2E.getName() + "Node");
-        //object2E.setPrimitive(Primitive.TRIANGLES);
+		Entity object2E = sm.createEntity("object2", "dolphinHighPoly.obj");
+		object2 = sm.getRootSceneNode().createChildSceneNode(object2E.getName() + "Node");
+        object2E.setPrimitive(Primitive.TRIANGLES);
 		//object2.attachObject(object2E);
-		//object2.moveUp(.5f);
+		object2.moveUp(.5f);
+		object2.moveForward(1f);
 
 		setupNetworking();
 		setupNPC();
@@ -403,9 +405,9 @@ public class MyGame extends VariableFrameRateGame {
 		initUFO(sm);
 		
 		// Physics
-		initPhysicsExamples(sm);
-		initPhysicsSystem();
-		createRagePhysicsWorld();
+		//initPhysicsExamples(sm);
+		//initPhysicsSystem();
+		//createRagePhysicsWorld();
 		
 		// Initial vertical update of player so
 		// player doesn't have to move to get above ground
@@ -449,13 +451,13 @@ public class MyGame extends VariableFrameRateGame {
 	
 	private void initUFO(SceneManager sm) throws IOException
 	{
-		Entity ufoE = sm.createEntity("ufo", "untitled.obj");
+		Entity ufoE = sm.createEntity("ufo1", "untitled.obj");
 		ufo = sm.getRootSceneNode().createChildSceneNode(ufoE.getName() + "Node");
         ufoE.setPrimitive(Primitive.TRIANGLES);
 		ufo.attachObject(ufoE);
 		ufo.moveUp(1.5f);
 		ufo.moveForward(5.0f);
-		ufo.scale(0.2f, 0.2f, 0.2f);
+		ufo.scale(0.5f, 0.5f, 0.5f);
 		
 		Light ufoLight = sm.createLight("ufoLight", Light.Type.POINT);
         ufoLight.setAmbient(new Color(.5f, .5f, .5f));
@@ -467,27 +469,46 @@ public class MyGame extends VariableFrameRateGame {
         ufoLightNode.attachObject(ufoLight);
 		
 		Entity ufo2E = sm.createEntity("ufo2", "untitled.obj");
-        ufo2 = sm.getRootSceneNode().createChildSceneNode(ufo2E.getName() + "Node");
+        ufo2 = ufo.createChildSceneNode(ufo2E.getName() + "Node");
         ufo2E.setPrimitive(Primitive.TRIANGLES);
         ufo2.attachObject(ufo2E);
         ufo2.moveUp(1.5f);
-        ufo2.moveBackward(5.0f);
+        ufo2.moveForward(10.0f);
         ufo2.scale(0.2f, 0.2f, 0.2f);
+		
+		Entity ufo3E = sm.createEntity("ufo3", "untitled.obj");
+        ufo3 = ufo.createChildSceneNode(ufo3E.getName() + "Node");
+        ufo3E.setPrimitive(Primitive.TRIANGLES);
+        ufo3.attachObject(ufo3E);
+        ufo3.moveUp(1.5f);
+        ufo3.moveBackward(10.0f);
+        ufo3.scale(0.2f, 0.2f, 0.2f);
+		
+		Entity ufo4E = sm.createEntity("ufo4", "untitled.obj");
+        ufo4 = ufo.createChildSceneNode(ufo4E.getName() + "Node");
+        ufo4E.setPrimitive(Primitive.TRIANGLES);
+        ufo4.attachObject(ufo4E);
+        ufo4.moveUp(1.5f);
+        ufo4.moveLeft(10.0f);
+        ufo4.scale(0.2f, 0.2f, 0.2f);
 
-        Light ufo2Light = sm.createLight("ufo2Light", Light.Type.POINT);
-        ufo2Light.setAmbient(new Color(.5f, .5f, .5f));
-        ufo2Light.setDiffuse(java.awt.Color.RED);
-        ufo2Light.setSpecular(java.awt.Color.BLUE);
-        ufo2Light.setRange(4f);
-        ufo2Light.setConstantAttenuation(.0005f);
-        SceneNode ufo2LightNode = ufo2.createChildSceneNode("ufo2LightNode");
-        ufo2LightNode.attachObject(ufo2Light);
+		Entity ufo5E = sm.createEntity("ufo5", "untitled.obj");
+        ufo5 = ufo.createChildSceneNode(ufo5E.getName() + "Node");
+        ufo5E.setPrimitive(Primitive.TRIANGLES);
+        ufo5.attachObject(ufo5E);
+        ufo5.moveUp(1.5f);
+        ufo5.moveRight(10.0f);
+        ufo5.scale(0.2f, 0.2f, 0.2f);
 
         RotationController rc = new RotationController(Vector3f.createUnitVectorY(), .02f);
 
         rc.addNode(ufo);
         rc.addNode(ufo2);
         sm.addController(rc);
+		
+		/*OrbitController oc = new OrbitController(avatar1, 1.0f, 1.0f, 1.0f, false);
+		oc.addNode(ufo2);
+		sm.addController(oc);*/
 	}
 	
 	private void initSkyBox(Engine eng, SceneManager sm) throws IOException
@@ -529,7 +550,7 @@ public class MyGame extends VariableFrameRateGame {
 	private void initLights(SceneManager sm) throws IOException
 	{
 		        //sm.getAmbientLight().setIntensity(new Color(.5f, .5f, .5f));
-		Light sunLight = sm.createLight("sunLight", Light.Type.POINT);
+		sunLight = sm.createLight("sunLight", Light.Type.POINT);
 		sunLight.setAmbient(new Color(.5f, .5f, .5f));
         sunLight.setDiffuse(new Color(.7f, .7f, .7f));
 		sunLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
@@ -1282,6 +1303,17 @@ public class MyGame extends VariableFrameRateGame {
 						exception.printStackTrace();
 					}
 				}
+				case KeyEvent.VK_T:
+				if (lightOnOff == false)
+				{
+					sunLight.setVisible(true);
+					lightOnOff = true;
+				}
+				else 
+				{
+					sunLight.setVisible(false);
+					lightOnOff = false;
+				}
 		}
 		super.keyPressed(e);
 	}
@@ -1415,6 +1447,16 @@ public class MyGame extends VariableFrameRateGame {
 	public void destroyNPCObjects(SceneNode n)
 	{
 		sceneManager.destroySceneNode(n);
+	}
+	
+	public void incScore()
+	{
+		counter++;
+	}
+	
+	public void decScore()
+	{
+		counter--;
 	}
 }
 
